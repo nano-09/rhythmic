@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sync Beats</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        html,
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            letter-spacing: -0.01em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4d4d4d;
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1DB954;
+        }
+
+        /* Custom styling for the seek slider */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(29, 185, 84, 0.6);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        input[type="range"]:hover::-webkit-slider-thumb,
+        input[type="range"]:focus::-webkit-slider-thumb {
+            opacity: 1;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(29, 185, 84, 0.6);
+            border: none;
+        }
+
+        input[type="range"] {
+            accent-color: #1DB954;
+        }
+    </style>
+</head>
+
+<body class="bg-black text-[#F5F5F5] min-h-screen flex items-center justify-center p-4">
+
+    <div id="join-overlay"
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div class="bg-[#181818]/90 p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
+            <div
+                class="w-16 h-16 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/30">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-white mb-1">Join Sync Session</h2>
+                <p class="text-xs text-[#A7A7A7]">Click below to enable synchronized audio playback in your browser.</p>
+            </div>
+            <button id="unlock-btn"
+                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                Enter Room & Start Audio
+            </button>
+        </div>
+    </div>
+
+    <main class="w-full flex justify-center">
+        <div id="nickname-screen"
+            class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div
+                    class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
+                <p class="text-xs text-[#A7A7A7]">What should we call you?</p>
+            </div>
+
+            <div class="space-y-3">
+                <label for="nickname-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Your
+                    Nickname</label>
+                <input id="nickname-input" type="text" maxlength="20" placeholder="e.g. Jamie"
+                    class="w-full bg-[#000000] border border-[#282828] text-center text-lg font-semibold rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                <p id="nickname-error-msg" class="text-xs text-red-400 text-center hidden">Please enter a nickname
+                    (2-20 characters).</p>
+            </div>
+
+            <button id="nickname-continue-btn"
+                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                Continue
+            </button>
+        </div>
+
+        <div id="room-select-screen"
+            class="hidden w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <div
+                    class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
+                <p class="text-xs text-[#A7A7A7]">Listen together in real-time</p>
+                <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#727272] pt-1">
+                    <span>Playing as <span id="display-nickname" class="text-[#B3B3B3] font-semibold"></span></span>
+                    <button id="change-nickname-btn"
+                        class="text-[#1ED760] hover:text-[#4CD97B] underline underline-offset-2">change</button>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Lobby
+                    Name <span class="text-[#727272] font-normal">(optional)</span></label>
+                <input id="lobby-name-input" type="text" maxlength="40" placeholder="e.g. Friday Night Vibes"
+                    class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+            </div>
+
+            <button id="create-room-btn"
+                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Create New Room</span>
+            </button>
+
+            <div id="saved-lobbies-section" class="space-y-2.5 pt-2 hidden">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-[#A7A7A7] uppercase tracking-wider">Your Recent Lobbies</span>
+                    <span id="saved-lobbies-count"
+                        class="text-[10px] font-semibold text-[#727272] bg-[#282828] px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="saved-lobbies-list" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-[#282828]"></div>
+                <span class="flex-shrink mx-4 text-[10px] text-[#727272] font-bold uppercase tracking-widest">or join
+                    existing</span>
+                <div class="flex-grow border-t border-[#282828]"></div>
+            </div>
+
+            <div class="space-y-3">
+                <label for="room-code-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Enter 6-Digit
+                    Room Code</label>
+                <div class="flex gap-2.5">
+                    <input id="room-code-input" type="text" maxlength="6" placeholder="839201"
+                        class="flex-1 bg-[#000000] border border-[#282828] text-center font-mono text-lg font-semibold tracking-widest uppercase rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                    <button id="join-room-btn"
+                        class="bg-[#282828] hover:bg-[#3E3E3E] active:bg-[#282828] text-white font-semibold px-6 py-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 flex items-center gap-2">
+                        <span>Join</span>
+                        <svg class="w-4 h-4 text-[#1ED760]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p id="room-error-msg" class="text-xs text-red-400 text-center hidden">Please enter a valid room code.
+                </p>
+            </div>
+        </div>
+
+        <div id="main-player-card"
+            class="w-full max-w-4xl bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-6 md:p-8 space-y-6 hidden">
+
+            <div class="flex items-center gap-2">
+                <div class="min-w-0 flex-1">
+                    <h2 id="lobby-name-display" class="text-base font-bold text-white truncate">Lobby</h2>
+                    <input id="lobby-name-edit-input" type="text" maxlength="40"
+                        class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
+                </div>
+                <button id="edit-lobby-name-btn" title="Rename Lobby"
+                    class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex justify-between items-center border-b border-[#282828]/80 pb-4">
+                <div class="flex items-center gap-2">
+                    <button id="leave-room-btn" title="Return to Lobby Select"
+                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                            </path>
+                        </svg>
+                    </button>
+
+                    <span id="role-badge"
+                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3]">
+                        Connecting...
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="save-lobby-btn" title="Save Lobby State"
+                        class="hidden bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                            </path>
+                        </svg>
+                        <span>Save</span>
+                    </button>
+
+                    <div class="bg-[#000000] border border-[#282828] px-3 py-1.5 rounded-full flex items-center gap-2">
+                        <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider">Code:</span>
+                        <span id="active-room-code"
+                            class="text-xs font-mono font-bold text-[#1ED760] tracking-wider">------</span>
+                    </div>
+
+                    <button id="copy-link-btn"
+                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+
+                <!-- LEFT COLUMN: Now Playing + Transport + Add Tracks -->
+                <div class="space-y-6 min-w-0">
+                    <div class="text-center space-y-1.5 py-1">
+                        <p id="current-track-title" class="text-lg font-bold text-white truncate px-4">No Track
+                            Selected</p>
+                        <div class="flex items-center justify-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span
+                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1ED760] opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-[#1DB954]"></span>
+                            </span>
+                            <p id="player-status-text" class="text-xs font-medium text-[#A7A7A7]">Waiting for
+                                playback...</p>
+                        </div>
+                    </div>
+
+                    <audio id="audio-player" class="w-full hidden" controls></audio>
+
+                    <div id="host-controls" class="space-y-4">
+
+                        <div class="space-y-1.5 px-1">
+                            <input id="seek-slider" type="range" min="0" max="100" value="0" step="0.1"
+                                class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none disabled:cursor-not-allowed"
+                                disabled />
+                            <div
+                                class="flex justify-between items-center text-[11px] font-mono font-medium text-[#A7A7A7]">
+                                <span id="current-time">00:00</span>
+                                <span id="total-duration">00:00</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-center gap-8 pt-1">
+                            <button id="prev-btn"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                                </svg>
+                            </button>
+
+                            <button id="play-btn"
+                                class="p-4 bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black rounded-full shadow-xl shadow-black/40 transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                <svg id="play-icon" class="w-7 h-7 translate-x-0.5" fill="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                                </svg>
+                            </button>
+
+                            <button id="next-btn"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="space-y-3 pt-4 border-t border-[#282828]">
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-semibold text-[#B3B3B3]">Upload Local MP3 / Audio
+                                    Files</label>
+                                <div class="flex gap-2">
+                                    <label for="local-file-input"
+                                        class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
+                                        <span id="file-input-label" class="truncate">Choose MP3 file(s)...</span>
+                                        <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                            </path>
+                                        </svg>
+                                    </label>
+                                    <input id="local-file-input" type="file" multiple
+                                        accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
+                                </div>
+                                <p class="text-[10px] text-[#727272]">You can select multiple files at once</p>
+                                <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
+                                    storage...
+                                </p>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">Or
+                                    Add Direct
+                                    Audio Stream URL(s) <span class="text-[#727272] font-normal">(one per
+                                        line)</span></label>
+                                <div class="flex gap-2 items-end">
+                                    <textarea id="track-url-input" rows="1"
+                                        placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"
+                                        class="flex-1 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
+                                    <button id="add-track-btn"
+                                        class="bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex-shrink-0">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                        <span>Add</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Queue / Users, given full column height and space -->
+                <div class="flex flex-col min-w-0 md:border-l md:border-[#282828] md:pl-8">
+                    <div
+                        class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
+                        <button id="tab-queue-btn"
+                            class="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-full transition-all duration-150">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                                </path>
+                            </svg>
+                            <span>Queue</span>
+                            <span id="tab-queue-count"
+                                class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
+                        </button>
+                        <button id="tab-users-btn"
+                            class="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-full transition-all duration-150">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-1.13-7.84">
+                                </path>
+                            </svg>
+                            <span>Users</span>
+                            <span id="tab-users-count"
+                                class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
+                        </button>
+                    </div>
+
+                    <div id="queue-tab-panel" class="flex-1 min-h-0 mt-4">
+                        <ul id="playlist-container"
+                            class="space-y-1.5 h-full max-h-[280px] md:max-h-[420px] overflow-y-auto pr-1">
+                            <li
+                                class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
+                                Queue is empty
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div id="users-tab-panel" class="hidden flex-1 min-h-0 mt-4">
+                        <ul id="participants-container"
+                            class="space-y-1.5 h-full max-h-[280px] md:max-h-[420px] overflow-y-auto pr-1"></ul>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        // -------------------------------------------------------------
+        // CONFIGURATION & SUPABASE SETUP
+        // -------------------------------------------------------------
+        // NOTE: import.meta.env only exists when this file is served through a
+        // Vite build. Since this is a plain static HTML file, that object is
+        // undefined by default — reading a property off it directly throws.
+        // We guard with optional chaining, and also allow setting credentials
+        // via a global config object if you're not using a bundler. Add a
+        // small script block in <head>, before this one, that sets:
+        //   window.SYNC_BEATS_CONFIG = {
+        //     SUPABASE_URL: 'https://YOUR-PROJECT.supabase.co',
+        //     SUPABASE_ANON_KEY: 'YOUR-ANON-KEY'
+        //   };
+        const SUPABASE_URL =
+            import.meta.env?.VITE_SUPABASE_URL ||
+            window.SYNC_BEATS_CONFIG?.SUPABASE_URL ||
+            '';
+        const SUPABASE_ANON_KEY =
+            import.meta.env?.VITE_SUPABASE_ANON_KEY ||
+            window.SYNC_BEATS_CONFIG?.SUPABASE_ANON_KEY ||
+            '';
+        const BUCKET_NAME = 'audio-bucket'; // Supabase storage bucket name
+
+        let supabaseClient = null;
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } else {
+            console.warn('Sync Beats: Supabase URL/key not set — realtime sync and storage uploads are disabled. See the config comment above.');
+        }
+
+        // -------------------------------------------------------------
+        // IDENTITY: NICKNAME & CLIENT ID
+        // -------------------------------------------------------------
+        const NICKNAME_KEY = 'syncbeats_nickname';
+        const CLIENT_ID_KEY = 'syncbeats_client_id';
+
+        let nickname = localStorage.getItem(NICKNAME_KEY) || '';
+
+        let clientId = localStorage.getItem(CLIENT_ID_KEY);
+        if (!clientId) {
+            clientId = (window.crypto && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            localStorage.setItem(CLIENT_ID_KEY, clientId);
+        }
+
+        // -------------------------------------------------------------
+        // STATE MANAGEMENT
+        // -------------------------------------------------------------
+        let isHost = false;
+        let roomId = null;
+        let roomChannel = null;
+        let lobbyName = '';
+        let joinedAt = null;
+
+        let playlist = [];
+        let currentTrackIndex = -1;
+        let isPlaying = false;
+        let isSeeking = false;
+
+        const audioPlayer = document.getElementById('audio-player');
+        const seekSlider = document.getElementById('seek-slider');
+        const currentTimeEl = document.getElementById('current-time');
+        const totalDurationEl = document.getElementById('total-duration');
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // -------------------------------------------------------------
+        // PERSISTENT ROLE & LOBBY STORAGE
+        // -------------------------------------------------------------
+        const SAVED_LOBBIES_KEY = 'syncbeats_saved_lobbies';
+        const ROOM_ROLES_KEY = 'syncbeats_room_roles';
+
+        function saveRoomRole(code, role) {
+            try {
+                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
+                roles[code] = role;
+                localStorage.setItem(ROOM_ROLES_KEY, JSON.stringify(roles));
+            } catch (e) {
+                console.error("Could not save room role", e);
+            }
+        }
+
+        function getRoomRole(code) {
+            try {
+                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
+                if (roles[code]) return roles[code];
+
+                const lobbies = getSavedLobbies();
+                if (lobbies[code] && lobbies[code].role) {
+                    return lobbies[code].role;
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        }
+
+        function getSavedLobbies() {
+            try {
+                return JSON.parse(localStorage.getItem(SAVED_LOBBIES_KEY) || '{}');
+            } catch {
+                return {};
+            }
+        }
+
+        function saveCurrentLobbyState() {
+            if (!roomId) return;
+
+            const lobbies = getSavedLobbies();
+
+            const serializablePlaylist = playlist.map(track => ({
+                id: track.id,
+                title: track.title,
+                url: track.url,
+                filePath: track.filePath || null,
+                isLocal: track.isLocal,
+                duration: track.duration || null
+            }));
+
+            lobbies[roomId] = {
+                roomId,
+                lobbyName: lobbyName || '',
+                role: isHost ? 'host' : 'guest',
+                updatedAt: Date.now(),
+                currentTrackIndex,
+                currentTime: audioPlayer.currentTime || 0,
+                playlist: serializablePlaylist
+            };
+
+            localStorage.setItem(SAVED_LOBBIES_KEY, JSON.stringify(lobbies));
+            saveRoomRole(roomId, isHost ? 'host' : 'guest');
+
+            const saveBtn = document.getElementById('save-lobby-btn');
+            if (saveBtn) {
+                saveBtn.classList.add('bg-blue-500', 'text-white');
+                setTimeout(() => saveBtn.classList.remove('bg-blue-500', 'text-white'), 1000);
+            }
+
+            renderSavedLobbiesList();
+        }
+
+        function renderSavedLobbiesList() {
+            const listEl = document.getElementById('saved-lobbies-list');
+            const containerEl = document.getElementById('saved-lobbies-section');
+            const countEl = document.getElementById('saved-lobbies-count');
+
+            const lobbies = getSavedLobbies();
+            const keys = Object.keys(lobbies);
+
+            countEl.innerText = keys.length;
+
+            if (keys.length === 0) {
+                containerEl.classList.add('hidden');
+                return;
+            }
+
+            containerEl.classList.remove('hidden');
+            listEl.innerHTML = keys.map(code => {
+                const item = lobbies[code];
+                const trackCount = item.playlist ? item.playlist.length : 0;
+                const role = getRoomRole(code) || item.role || 'guest';
+                const isHostRole = role === 'host';
+                const displayName = item.lobbyName ? escapeHtml(item.lobbyName) : `Room ${code}`;
+
+                return `
+          <div class="flex items-center justify-between p-2.5 bg-[#000000]/70 border border-[#282828] rounded-xl text-xs">
+            <div class="min-w-0 flex-1 flex items-center gap-2">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-[#D1D1D1]">${displayName}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="font-mono text-[10px] text-[#1ED760]">${code}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${isHostRole ? 'bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}">
+                    ${isHostRole ? 'Host' : 'Guest'}
+                  </span>
+                  <span class="text-[10px] text-[#727272]">(${trackCount} track${trackCount === 1 ? '' : 's'})</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button data-rejoin="${code}" class="rejoin-btn bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-[11px] font-bold px-2.5 py-1 rounded-full transition-all">
+                Rejoin
+              </button>
+              <button data-delete="${code}" class="delete-lobby-btn text-[#727272] hover:text-red-400 p-1 rounded-lg">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
+          </div>
+        `;
+            }).join('');
+
+            listEl.querySelectorAll('.rejoin-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const code = e.currentTarget.getAttribute('data-rejoin');
+                    rejoinSavedLobby(code);
+                });
+            });
+
+            listEl.querySelectorAll('.delete-lobby-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const code = e.currentTarget.getAttribute('data-delete');
+                    deleteSavedLobby(code);
+                });
+            });
+        }
+
+        function rejoinSavedLobby(code) {
+            const savedRole = getRoomRole(code);
+            roomId = code;
+
+            if (savedRole === 'host') {
+                isHost = true;
+                saveRoomRole(code, 'host');
+            } else {
+                isHost = false;
+                saveRoomRole(code, 'guest');
+            }
+
+            window.history.replaceState({}, '', `?room=${roomId}`);
+
+            const lobbies = getSavedLobbies();
+            const savedState = lobbies[code];
+            if (savedState) {
+                playlist = savedState.playlist || [];
+                currentTrackIndex = savedState.currentTrackIndex ?? -1;
+                lobbyName = savedState.lobbyName || '';
+            }
+
+            startRoomSession();
+
+            if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
+                loadTrack(currentTrackIndex);
+            } else {
+                renderPlaylist();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // DELETE LOBBY & CLEANUP SUPABASE SUBFOLDER
+        // -------------------------------------------------------------
+        async function deleteSavedLobby(code) {
+            if (supabaseClient) {
+                try {
+                    const folderPath = `lobbies/${code}`;
+
+                    // List all files in the lobby subfolder
+                    const { data: fileList } = await supabaseClient.storage
+                        .from(BUCKET_NAME)
+                        .list(folderPath, { limit: 100 });
+
+                    // If files exist in storage subfolder, remove them
+                    if (fileList && fileList.length > 0) {
+                        const filesToDelete = fileList.map((file) => `${folderPath}/${file.name}`);
+                        await supabaseClient.storage
+                            .from(BUCKET_NAME)
+                            .remove(filesToDelete);
+                    }
+                } catch (err) {
+                    console.error(`Could not clean up storage folder for lobby ${code}:`, err);
+                }
+            }
+
+            const lobbies = getSavedLobbies();
+            delete lobbies[code];
+            localStorage.setItem(SAVED_LOBBIES_KEY, JSON.stringify(lobbies));
+
+            try {
+                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
+                delete roles[code];
+                localStorage.setItem(ROOM_ROLES_KEY, JSON.stringify(roles));
+            } catch (e) { }
+
+            renderSavedLobbiesList();
+        }
+
+        // -------------------------------------------------------------
+        // LEAVE ROOM / RETURN HOME
+        // -------------------------------------------------------------
+        function returnToHomeScreen() {
+            if (roomId) {
+                saveCurrentLobbyState();
+            }
+
+            audioPlayer.pause();
+            audioPlayer.src = "";
+            isPlaying = false;
+
+            if (roomChannel) {
+                supabaseClient?.removeChannel(roomChannel);
+                roomChannel = null;
+            }
+
+            roomId = null;
+            isHost = false;
+            joinedAt = null;
+            lobbyName = '';
+            playlist = [];
+            currentTrackIndex = -1;
+
+            window.history.replaceState({}, '', window.location.pathname);
+
+            document.getElementById('main-player-card').classList.add('hidden');
+            document.getElementById('nickname-screen').classList.add('hidden');
+            document.getElementById('room-select-screen').classList.remove('hidden');
+            document.getElementById('join-overlay').classList.add('hidden');
+
+            const participantsContainer = document.getElementById('participants-container');
+            if (participantsContainer) participantsContainer.innerHTML = '';
+            const participantsCount = document.getElementById('tab-users-count');
+            if (participantsCount) participantsCount.innerText = '0';
+
+            setActiveTab('queue');
+
+            renderSavedLobbiesList();
+        }
+
+        // -------------------------------------------------------------
+        // INITIALIZATION & ROOM MANAGEMENT
+        // -------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSavedLobbiesList();
+            setActiveTab('queue');
+
+            document.getElementById('nickname-input').value = nickname;
+
+            if (nickname) {
+                updateNicknameDisplay();
+                document.getElementById('nickname-screen').classList.add('hidden');
+                document.getElementById('room-select-screen').classList.remove('hidden');
+                handlePendingRoomFromUrl();
+            } else {
+                document.getElementById('nickname-screen').classList.remove('hidden');
+                document.getElementById('room-select-screen').classList.add('hidden');
+            }
+        });
+
+        function handlePendingRoomFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('room');
+
+            if (codeFromUrl) {
+                document.getElementById('room-code-input').value = codeFromUrl.toUpperCase();
+                joinRoomWithCode(codeFromUrl);
+            }
+        }
+
+        // -------------------------------------------------------------
+        // NICKNAME SCREEN
+        // -------------------------------------------------------------
+        function updateNicknameDisplay() {
+            const el = document.getElementById('display-nickname');
+            if (el) el.innerText = nickname;
+        }
+
+        function showNicknameScreen() {
+            document.getElementById('nickname-input').value = nickname;
+            document.getElementById('nickname-error-msg').classList.add('hidden');
+            document.getElementById('room-select-screen').classList.add('hidden');
+            document.getElementById('nickname-screen').classList.remove('hidden');
+        }
+
+        function completeNicknameStep() {
+            const input = document.getElementById('nickname-input');
+            const errorEl = document.getElementById('nickname-error-msg');
+            const val = input.value.trim();
+
+            if (val.length < 2 || val.length > 20) {
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            errorEl.classList.add('hidden');
+            nickname = val;
+            localStorage.setItem(NICKNAME_KEY, nickname);
+            updateNicknameDisplay();
+
+            document.getElementById('nickname-screen').classList.add('hidden');
+            document.getElementById('room-select-screen').classList.remove('hidden');
+
+            handlePendingRoomFromUrl();
+        }
+
+        function createRoomServer() {
+            roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            isHost = true;
+
+            const nameInput = document.getElementById('lobby-name-input');
+            const typedName = (nameInput?.value || '').trim();
+            lobbyName = typedName || `${nickname}'s Lobby`;
+            if (nameInput) nameInput.value = '';
+
+            saveRoomRole(roomId, 'host');
+            window.history.replaceState({}, '', `?room=${roomId}`);
+
+            saveCurrentLobbyState();
+            startRoomSession();
+        }
+
+        function joinRoomWithCode(overrideCode = null) {
+            const inputEl = document.getElementById('room-code-input');
+            const errorEl = document.getElementById('room-error-msg');
+            const code = (overrideCode || inputEl.value).trim().toUpperCase();
+
+            if (!code || code.length < 4) {
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            errorEl.classList.add('hidden');
+            roomId = code;
+
+            const persistentRole = getRoomRole(code);
+
+            if (persistentRole === 'host') {
+                isHost = true;
+                saveRoomRole(code, 'host');
+            } else {
+                isHost = false;
+                saveRoomRole(code, 'guest');
+            }
+
+            window.history.replaceState({}, '', `?room=${roomId}`);
+
+            const lobbies = getSavedLobbies();
+            if (lobbies[roomId]) {
+                playlist = lobbies[roomId].playlist || [];
+                currentTrackIndex = lobbies[roomId].currentTrackIndex ?? -1;
+                lobbyName = lobbies[roomId].lobbyName || '';
+            } else {
+                playlist = [];
+                currentTrackIndex = -1;
+                lobbyName = '';
+            }
+
+            startRoomSession();
+
+            // Repaint the queue/player UI from the locally cached lobby state
+            // right away, instead of waiting on the realtime sync round-trip.
+            if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
+                loadTrack(currentTrackIndex);
+            } else {
+                renderPlaylist();
+            }
+        }
+
+        function startRoomSession() {
+            document.getElementById('room-select-screen').classList.add('hidden');
+            document.getElementById('main-player-card').classList.remove('hidden');
+
+            document.getElementById('active-room-code').innerText = roomId;
+
+            updateRoleUI();
+            updateLobbyNameUI();
+            initializeRealtime();
+
+            document.getElementById('join-overlay').classList.remove('hidden');
+        }
+
+        function unlockAudioSession() {
+            document.getElementById('join-overlay').classList.add('hidden');
+            audioPlayer.play().then(() => audioPlayer.pause()).catch(() => { });
+        }
+
+        function updateRoleUI() {
+            const badge = document.getElementById('role-badge');
+            const saveBtn = document.getElementById('save-lobby-btn');
+            const editNameBtn = document.getElementById('edit-lobby-name-btn');
+            const controls = document.querySelectorAll('#host-controls button, #host-controls input, #host-controls label');
+
+            if (isHost) {
+                badge.innerText = 'Host';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30';
+                saveBtn.classList.remove('hidden');
+                editNameBtn?.classList.remove('hidden');
+                controls.forEach(el => {
+                    if (el.tagName === 'LABEL') {
+                        el.classList.remove('pointer-events-none', 'opacity-50');
+                    } else {
+                        el.removeAttribute('disabled');
+                    }
+                });
+            } else {
+                badge.innerText = 'Guest (Listening)';
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30';
+                saveBtn.classList.add('hidden');
+                editNameBtn?.classList.add('hidden');
+                controls.forEach(el => {
+                    if (el.tagName === 'LABEL') {
+                        el.classList.add('pointer-events-none', 'opacity-50');
+                    } else {
+                        el.setAttribute('disabled', 'true');
+                    }
+                });
+            }
+        }
+
+        // -------------------------------------------------------------
+        // LOBBY NAME (HOST-EDITABLE)
+        // -------------------------------------------------------------
+        function updateLobbyNameUI() {
+            const display = document.getElementById('lobby-name-display');
+            if (!display) return;
+            display.innerText = lobbyName || `Room ${roomId}`;
+        }
+
+        function startEditingLobbyName() {
+            if (!isHost) return;
+
+            const display = document.getElementById('lobby-name-display');
+            const input = document.getElementById('lobby-name-edit-input');
+            if (!display || !input) return;
+
+            input.value = lobbyName || '';
+            display.classList.add('hidden');
+            input.classList.remove('hidden');
+            input.focus();
+            input.select();
+        }
+
+        function commitLobbyNameEdit() {
+            const display = document.getElementById('lobby-name-display');
+            const input = document.getElementById('lobby-name-edit-input');
+            if (!display || !input) return;
+
+            if (input.classList.contains('hidden')) return; // already committed (e.g. Enter then blur)
+
+            const val = input.value.trim();
+            lobbyName = val || `${nickname}'s Lobby`;
+
+            input.classList.add('hidden');
+            display.classList.remove('hidden');
+            updateLobbyNameUI();
+
+            saveCurrentLobbyState();
+            broadcastState();
+        }
+
+        function cancelLobbyNameEdit() {
+            const display = document.getElementById('lobby-name-display');
+            const input = document.getElementById('lobby-name-edit-input');
+            if (!display || !input) return;
+
+            input.classList.add('hidden');
+            display.classList.remove('hidden');
+        }
+
+        function copyInviteLink() {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+            navigator.clipboard.writeText(shareUrl);
+            alert(`Room Link Copied!\n\nRoom Code: ${roomId}\nURL: ${shareUrl}`);
+        }
+
+        // -------------------------------------------------------------
+        // REALTIME COMMUNICATION
+        // -------------------------------------------------------------
+        function initializeRealtime() {
+            if (!supabaseClient || !roomId) return;
+
+            roomChannel = supabaseClient.channel(`room-${roomId}`, {
+                config: {
+                    broadcast: { self: false },
+                    presence: { key: clientId }
+                }
+            });
+
+            roomChannel
+                .on('broadcast', { event: 'player-sync' }, ({ payload }) => handleIncomingState(payload))
+                .on('broadcast', { event: 'request-state' }, () => {
+                    if (isHost) broadcastState();
+                })
+                .on('broadcast', { event: 'transfer-host' }, ({ payload }) => handleHostTransfer(payload))
+                .on('presence', { event: 'sync' }, () => {
+                    renderParticipants(roomChannel.presenceState());
+                })
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        joinedAt = joinedAt || Date.now();
+                        roomChannel.track({ clientId, nickname, isHost, joinedAt });
+
+                        if (!isHost) {
+                            roomChannel.send({ type: 'broadcast', event: 'request-state', payload: {} });
+                        }
+                    }
+                });
+        }
+
+        // -------------------------------------------------------------
+        // PRESENCE & HOST TRANSFER
+        // -------------------------------------------------------------
+        function renderParticipants(state) {
+            const container = document.getElementById('participants-container');
+            const countEl = document.getElementById('tab-users-count');
+            if (!container || !countEl) return;
+
+            const entries = Object.values(state || {})
+                .map(metas => metas[metas.length - 1])
+                .filter(Boolean);
+
+            entries.sort((a, b) => {
+                if (a.isHost && !b.isHost) return -1;
+                if (!a.isHost && b.isHost) return 1;
+                return (a.joinedAt || 0) - (b.joinedAt || 0);
+            });
+
+            countEl.innerText = entries.length;
+
+            if (entries.length === 0) {
+                container.innerHTML = `
+          <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
+            No one here yet
+          </li>
+        `;
+                return;
+            }
+
+            container.innerHTML = entries.map(entry => {
+                const isSelf = entry.clientId === clientId;
+                const canTransfer = isHost && !isSelf;
+                const initial = (entry.nickname || '?').trim().charAt(0).toUpperCase() || '?';
+
+                return `
+          <li class="flex items-center gap-3.5 px-3 py-3 rounded-xl border transition-all duration-150 ${entry.isHost
+                        ? 'bg-[#1DB954]/10 border-[#1DB954]/30'
+                        : 'border-transparent hover:bg-[#181818]/60 hover:border-[#282828]'
+                    }">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold ${entry.isHost ? 'bg-[#1DB954]/20 text-[#4CD97B]' : 'bg-[#282828]/80 text-[#A7A7A7]'
+                    }">
+              ${escapeHtml(initial)}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium truncate text-[#D1D1D1]">
+                ${escapeHtml(entry.nickname || 'Guest')}
+                ${isSelf ? '<span class="text-[#727272] font-normal">(You)</span>' : ''}
+              </p>
+              <span class="text-[10px] font-medium ${entry.isHost ? 'text-[#1ED760]' : 'text-[#727272]'}">${entry.isHost ? 'Host' : 'Listener'}</span>
+            </div>
+
+            ${canTransfer ? `
+              <button data-transfer="${entry.clientId}" class="transfer-host-btn flex-shrink-0 text-[10px] font-semibold text-[#4CD97B] hover:text-white bg-[#1DB954]/20 hover:bg-[#1DB954]/40 border border-[#1DB954]/30 px-2.5 py-1.5 rounded-lg transition-all active:scale-95">
+                Make Host
+              </button>
+            ` : ''}
+          </li>
+        `;
+            }).join('');
+
+            container.querySelectorAll('.transfer-host-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.getAttribute('data-transfer');
+                    transferHost(targetId);
+                });
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.innerText = str;
+            return div.innerHTML;
+        }
+
+        function transferHost(targetClientId) {
+            if (!isHost || !roomChannel || !targetClientId || targetClientId === clientId) return;
+
+            roomChannel.send({
+                type: 'broadcast',
+                event: 'transfer-host',
+                payload: { newHostId: targetClientId, oldHostId: clientId }
+            });
+
+            isHost = false;
+            saveRoomRole(roomId, 'guest');
+            updateRoleUI();
+            roomChannel.track({ clientId, nickname, isHost, joinedAt });
+        }
+
+        function handleHostTransfer(payload) {
+            if (!payload) return;
+
+            if (payload.newHostId === clientId) {
+                isHost = true;
+            } else if (payload.oldHostId === clientId) {
+                isHost = false;
+            } else {
+                return;
+            }
+
+            saveRoomRole(roomId, isHost ? 'host' : 'guest');
+            updateRoleUI();
+            roomChannel?.track({ clientId, nickname, isHost, joinedAt });
+        }
+
+        function broadcastState() {
+            if (!roomChannel || !isHost) return;
+
+            saveCurrentLobbyState();
+
+            roomChannel.send({
+                type: 'broadcast',
+                event: 'player-sync',
+                payload: {
+                    lobbyName,
+                    playlist,
+                    currentTrackIndex,
+                    isPlaying,
+                    currentTime: audioPlayer.currentTime,
+                    timestamp: Date.now()
+                }
+            });
+        }
+
+        function handleIncomingState(payload) {
+            if (typeof payload.lobbyName === 'string') {
+                lobbyName = payload.lobbyName;
+                updateLobbyNameUI();
+            }
+
+            playlist = payload.playlist || [];
+            currentTrackIndex = payload.currentTrackIndex;
+            isPlaying = payload.isPlaying;
+
+            renderPlaylist();
+
+            if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
+                const targetTrack = playlist[currentTrackIndex];
+                if (audioPlayer.src !== targetTrack.url) {
+                    audioPlayer.src = targetTrack.url;
+                }
+
+                const latency = (Date.now() - payload.timestamp) / 1000;
+                const targetTime = payload.currentTime + (isPlaying ? latency : 0);
+
+                if (Math.abs(audioPlayer.currentTime - targetTime) > 1.5) {
+                    audioPlayer.currentTime = targetTime;
+                }
+
+                if (isPlaying) {
+                    audioPlayer.play().catch(() => { });
+                } else {
+                    audioPlayer.pause();
+                }
+            } else {
+                audioPlayer.pause();
+                audioPlayer.src = "";
+            }
+
+            updatePlayerDisplay();
+        }
+
+        // -------------------------------------------------------------
+        // AUDIO PLAYER & TIMESTAMP SYNC EVENTS
+        // -------------------------------------------------------------
+        audioPlayer.ontimeupdate = () => {
+            if (!isSeeking && audioPlayer.duration) {
+                seekSlider.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                currentTimeEl.innerText = formatTime(audioPlayer.currentTime);
+            }
+        };
+
+        audioPlayer.onloadedmetadata = () => {
+            totalDurationEl.innerText = formatTime(audioPlayer.duration);
+            if (isHost) seekSlider.removeAttribute('disabled');
+        };
+
+        seekSlider.oninput = () => {
+            if (!isHost) return;
+            isSeeking = true;
+            const seekTime = (seekSlider.value / 100) * audioPlayer.duration;
+            currentTimeEl.innerText = formatTime(seekTime);
+        };
+
+        seekSlider.onchange = () => {
+            if (!isHost) return;
+            const seekTime = (seekSlider.value / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = seekTime;
+            isSeeking = false;
+            broadcastState();
+        };
+
+        // -------------------------------------------------------------
+        // FILE INPUT & SUPABASE SUBFOLDER UPLOAD
+        // -------------------------------------------------------------
+        async function handleLocalFileSelect(event) {
+            if (!isHost) return;
+
+            const files = Array.from(event.target.files || []);
+            if (files.length === 0) return;
+
+            const uploadStatusEl = document.getElementById('upload-status');
+            const labelEl = document.getElementById('file-input-label');
+
+            labelEl.innerText = files.length === 1
+                ? files[0].name
+                : `${files.length} files selected`;
+
+            uploadStatusEl.classList.remove('hidden');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                uploadStatusEl.innerText = files.length > 1
+                    ? `Uploading ${i + 1} of ${files.length}: ${file.name}`
+                    : 'Uploading to lobby storage...';
+
+                let audioUrl = URL.createObjectURL(file);
+                let filePath = null;
+
+                // Upload file directly into the lobby's subfolder in Supabase Storage
+                if (supabaseClient && roomId) {
+                    try {
+                        const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                        filePath = `lobbies/${roomId}/${Date.now()}_${i}_${sanitizedFileName}`;
+
+                        const { error: uploadError } = await supabaseClient.storage
+                            .from(BUCKET_NAME)
+                            .upload(filePath, file, {
+                                cacheControl: '3600',
+                                upsert: false,
+                                contentType: file.type || 'audio/mpeg'
+                            });
+
+                        if (!uploadError) {
+                            const { data: publicData } = supabaseClient.storage
+                                .from(BUCKET_NAME)
+                                .getPublicUrl(filePath);
+
+                            if (publicData?.publicUrl) {
+                                audioUrl = publicData.publicUrl;
+                            }
+                        } else {
+                            console.warn('Supabase Storage upload warning:', uploadError.message);
+                        }
+                    } catch (err) {
+                        console.error('File upload failed:', err);
+                    }
+                }
+
+                const track = {
+                    id: Date.now() + i,
+                    title: file.name,
+                    url: audioUrl,
+                    filePath: filePath,
+                    isLocal: true
+                };
+
+                playlist.push(track);
+
+                if (currentTrackIndex === -1) {
+                    currentTrackIndex = 0;
+                    loadTrack(0);
+                } else {
+                    renderPlaylist();
+                }
+            }
+
+            uploadStatusEl.classList.add('hidden');
+            uploadStatusEl.innerText = 'Uploading to lobby storage...';
+            labelEl.innerText = 'Choose MP3 file(s)...';
+            event.target.value = '';
+
+            broadcastState();
+        }
+
+        function addTrackToPlaylist() {
+            if (!isHost) return;
+
+            const input = document.getElementById('track-url-input');
+            const rawValue = input.value.trim();
+
+            if (!rawValue) return;
+
+            // Support one URL per line (also tolerate comma-separated on a single line)
+            const urls = rawValue
+                .split(/[\n,]+/)
+                .map(u => u.trim())
+                .filter(Boolean);
+
+            if (urls.length === 0) return;
+
+            urls.forEach((url, i) => {
+                const cleanTitle = url.split('/').pop().split('?')[0] || `Track ${playlist.length + 1}`;
+
+                const track = {
+                    id: Date.now() + i,
+                    title: decodeURIComponent(cleanTitle),
+                    url: url,
+                    filePath: null,
+                    isLocal: false
+                };
+
+                playlist.push(track);
+
+                if (currentTrackIndex === -1) {
+                    currentTrackIndex = 0;
+                    loadTrack(0);
+                } else {
+                    renderPlaylist();
+                }
+            });
+
+            input.value = '';
+            broadcastState();
+        }
+
+        function loadTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+
+            currentTrackIndex = index;
+            const track = playlist[index];
+
+            if (track.url) {
+                audioPlayer.src = track.url;
+                audioPlayer.currentTime = 0;
+
+                if (isPlaying) {
+                    audioPlayer.play().catch(() => { });
+                }
+            }
+
+            updatePlayerDisplay();
+            renderPlaylist();
+            broadcastState();
+        }
+
+        function togglePlayPause() {
+            if (!isHost || currentTrackIndex === -1) return;
+
+            isPlaying = !isPlaying;
+
+            if (isPlaying) {
+                audioPlayer.play().catch(() => { });
+            } else {
+                audioPlayer.pause();
+            }
+
+            updatePlayerDisplay();
+            broadcastState();
+        }
+
+        function playNextTrack() {
+            if (!isHost) return;
+            if (currentTrackIndex + 1 < playlist.length) {
+                loadTrack(currentTrackIndex + 1);
+            }
+        }
+
+        function playPreviousTrack() {
+            if (!isHost) return;
+            if (currentTrackIndex - 1 >= 0) {
+                loadTrack(currentTrackIndex - 1);
+            }
+        }
+
+        audioPlayer.onended = () => {
+            if (isHost && currentTrackIndex + 1 < playlist.length) {
+                loadTrack(currentTrackIndex + 1);
+            } else if (isHost) {
+                isPlaying = false;
+                updatePlayerDisplay();
+                broadcastState();
+            }
+        };
+
+        // -------------------------------------------------------------
+        // UI RENDERERS & EVENT LISTENERS
+        // -------------------------------------------------------------
+        function updatePlayerDisplay() {
+            const titleEl = document.getElementById('current-track-title');
+            const statusEl = document.getElementById('player-status-text');
+            const playIcon = document.getElementById('play-icon');
+            const pauseIcon = document.getElementById('pause-icon');
+
+            if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
+                titleEl.innerText = playlist[currentTrackIndex].title;
+                statusEl.innerText = isPlaying ? "Playing in sync" : "Paused";
+            } else {
+                titleEl.innerText = "No Track Selected";
+                statusEl.innerText = "Waiting for playback...";
+                currentTimeEl.innerText = "00:00";
+                totalDurationEl.innerText = "00:00";
+                seekSlider.value = 0;
+                seekSlider.setAttribute('disabled', 'true');
+            }
+
+            if (isPlaying) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        function probeDuration(track) {
+            if (!track || !track.url || track.duration || track._probing) return;
+            track._probing = true;
+
+            const probe = new Audio();
+            probe.preload = 'metadata';
+            probe.src = track.url;
+
+            const cleanup = () => { track._probing = false; };
+
+            probe.addEventListener('loadedmetadata', () => {
+                if (isFinite(probe.duration) && probe.duration > 0) {
+                    track.duration = probe.duration;
+                    renderPlaylist();
+                }
+                cleanup();
+            }, { once: true });
+
+            probe.addEventListener('error', cleanup, { once: true });
+        }
+
+        function renderPlaylist() {
+            const container = document.getElementById('playlist-container');
+            const countEl = document.getElementById('tab-queue-count');
+
+            countEl.innerText = playlist.length;
+
+            if (playlist.length === 0) {
+                container.innerHTML = `
+          <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
+            Queue is empty
+          </li>
+        `;
+                return;
+            }
+
+            const playIconSvg = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+            const pauseIconSvg = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            const gripIconSvg = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+            const trashIconSvg = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+
+            container.innerHTML = playlist.map((track, i) => {
+                const isActive = i === currentTrackIndex;
+                const durationLabel = track.duration ? formatTime(track.duration) : '--:--';
+
+                return `
+          <li data-index="${i}" draggable="${isHost ? 'true' : 'false'}"
+              class="drag-row group flex items-center gap-2.5 px-3 py-3 rounded-xl border-2 border-transparent transition-colors duration-100 ${isActive
+                        ? 'bg-[#1DB954]/10 !border-[#1DB954]/30'
+                        : 'hover:bg-[#181818]/60'
+                    }">
+            ${isHost ? `
+              <span class="drag-handle flex-shrink-0 text-[#535353] hover:text-[#A7A7A7] cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder">
+                ${gripIconSvg}
+              </span>
+            ` : ''}
+
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#1DB954]/20' : 'bg-[#282828]/80'
+                    }">
+              ${isActive ? `
+                <span class="flex items-end gap-0.5 h-4">
+                  <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 60%"></span>
+                  <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 100%; animation-delay: .15s"></span>
+                  <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 40%; animation-delay: .3s"></span>
+                </span>
+              ` : `<span class="text-xs font-mono text-[#727272]">${String(i + 1).padStart(2, '0')}</span>`}
+            </div>
+
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(track.title)}</p>
+              ${track.isLocal ? '<span class="text-[10px] text-[#1ED760] font-medium">Uploaded</span>' : ''}
+            </div>
+
+            <span class="text-[11px] font-mono text-[#727272] flex-shrink-0 tabular-nums">${durationLabel}</span>
+
+            ${isHost ? `
+              <button data-play-track="${i}" class="play-track-btn flex-shrink-0 p-1.5 rounded-lg transition-all ${isActive ? 'text-[#4CD97B] hover:bg-[#282828]' : 'text-[#727272] hover:text-white hover:bg-[#282828] opacity-0 group-hover:opacity-100'
+                        }">
+                ${isActive && isPlaying ? pauseIconSvg : playIconSvg}
+              </button>
+              <button data-remove-track="${i}" title="Remove from queue" class="remove-track-btn flex-shrink-0 p-1.5 rounded-lg text-[#727272] hover:text-red-400 hover:bg-[#282828] transition-all opacity-0 group-hover:opacity-100">
+                ${trashIconSvg}
+              </button>
+            ` : (isActive ? `
+              <span class="flex-shrink-0 text-[10px] font-semibold text-[#1ED760]">${isPlaying ? 'Playing' : 'Paused'}</span>
+            ` : '')}
+          </li>
+        `;
+            }).join('');
+
+            container.querySelectorAll('.play-track-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.currentTarget.getAttribute('data-play-track'), 10);
+                    if (isNaN(idx)) return;
+
+                    if (idx === currentTrackIndex) {
+                        togglePlayPause();
+                    } else {
+                        isPlaying = true;
+                        loadTrack(idx);
+                    }
+                });
+            });
+
+            container.querySelectorAll('.remove-track-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(e.currentTarget.getAttribute('data-remove-track'), 10);
+                    if (isNaN(idx)) return;
+                    removeTrackFromPlaylist(idx);
+                });
+            });
+
+            if (isHost) {
+                attachDragAndDropHandlers(container);
+            }
+
+            playlist.forEach(probeDuration);
+        }
+
+        // -------------------------------------------------------------
+        // QUEUE: REMOVE TRACK
+        // -------------------------------------------------------------
+        function removeTrackFromPlaylist(index) {
+            if (!isHost) return;
+            if (index < 0 || index >= playlist.length) return;
+
+            const removingCurrent = index === currentTrackIndex;
+
+            playlist.splice(index, 1);
+
+            if (playlist.length === 0) {
+                currentTrackIndex = -1;
+                isPlaying = false;
+                audioPlayer.pause();
+                audioPlayer.removeAttribute('src');
+                audioPlayer.load();
+                updatePlayerDisplay();
+            } else if (removingCurrent) {
+                const nextIndex = Math.min(index, playlist.length - 1);
+                loadTrack(nextIndex);
+                return; // loadTrack already re-renders and broadcasts
+            } else if (index < currentTrackIndex) {
+                currentTrackIndex -= 1;
+            }
+
+            renderPlaylist();
+            broadcastState();
+        }
+
+        // -------------------------------------------------------------
+        // QUEUE: DRAG-TO-REORDER
+        // -------------------------------------------------------------
+        let dragSourceIndex = null;
+
+        function attachDragAndDropHandlers(container) {
+            const rows = container.querySelectorAll('li[data-index]');
+
+            const clearDropIndicators = () => {
+                rows.forEach(el => el.classList.remove('!border-t-[#1DB954]', 'border-dashed'));
+            };
+
+            rows.forEach((row) => {
+                row.addEventListener('dragstart', (e) => {
+                    dragSourceIndex = parseInt(row.getAttribute('data-index'), 10);
+                    row.classList.add('opacity-40');
+                    if (e.dataTransfer) {
+                        e.dataTransfer.effectAllowed = 'move';
+                        try { e.dataTransfer.setData('text/plain', String(dragSourceIndex)); } catch (_) { }
+                    }
+                });
+
+                row.addEventListener('dragend', () => {
+                    row.classList.remove('opacity-40');
+                    clearDropIndicators();
+                    dragSourceIndex = null;
+                });
+
+                row.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                    if (dragSourceIndex === null) return;
+                    clearDropIndicators();
+                    row.classList.add('!border-t-[#1DB954]', 'border-dashed');
+                });
+
+                row.addEventListener('dragleave', () => {
+                    row.classList.remove('!border-t-[#1DB954]', 'border-dashed');
+                });
+
+                row.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    clearDropIndicators();
+                    const targetIndex = parseInt(row.getAttribute('data-index'), 10);
+                    if (dragSourceIndex === null || isNaN(targetIndex) || dragSourceIndex === targetIndex) return;
+                    reorderPlaylist(dragSourceIndex, targetIndex);
+                    dragSourceIndex = null;
+                });
+            });
+        }
+
+        function reorderPlaylist(fromIndex, toIndex) {
+            if (!isHost) return;
+            if (fromIndex < 0 || fromIndex >= playlist.length) return;
+            if (toIndex < 0 || toIndex >= playlist.length) return;
+            if (fromIndex === toIndex) return;
+
+            const activeTrackId = (currentTrackIndex >= 0 && playlist[currentTrackIndex])
+                ? playlist[currentTrackIndex].id
+                : null;
+
+            const [movedTrack] = playlist.splice(fromIndex, 1);
+            playlist.splice(toIndex, 0, movedTrack);
+
+            if (activeTrackId !== null) {
+                const newIndex = playlist.findIndex(t => t.id === activeTrackId);
+                if (newIndex !== -1) currentTrackIndex = newIndex;
+            }
+
+            renderPlaylist();
+            broadcastState();
+        }
+
+        // -------------------------------------------------------------
+        // TABS: QUEUE / USERS
+        // -------------------------------------------------------------
+        function setActiveTab(tab) {
+            const queueBtn = document.getElementById('tab-queue-btn');
+            const usersBtn = document.getElementById('tab-users-btn');
+            const queuePanel = document.getElementById('queue-tab-panel');
+            const usersPanel = document.getElementById('users-tab-panel');
+            if (!queueBtn || !usersBtn || !queuePanel || !usersPanel) return;
+
+            const activate = (btn) => {
+                btn.classList.add('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
+                btn.classList.remove('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
+            };
+            const deactivate = (btn) => {
+                btn.classList.remove('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
+                btn.classList.add('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
+            };
+
+            if (tab === 'users') {
+                activate(usersBtn);
+                deactivate(queueBtn);
+                usersPanel.classList.remove('hidden');
+                queuePanel.classList.add('hidden');
+            } else {
+                activate(queueBtn);
+                deactivate(usersBtn);
+                queuePanel.classList.remove('hidden');
+                usersPanel.classList.add('hidden');
+            }
+        }
+
+        // Attach Event Listeners
+        document.getElementById('tab-queue-btn').addEventListener('click', () => setActiveTab('queue'));
+        document.getElementById('tab-users-btn').addEventListener('click', () => setActiveTab('users'));
+        document.getElementById('nickname-continue-btn').addEventListener('click', completeNicknameStep);
+        document.getElementById('nickname-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') completeNicknameStep();
+        });
+        document.getElementById('change-nickname-btn').addEventListener('click', showNicknameScreen);
+        document.getElementById('unlock-btn').addEventListener('click', unlockAudioSession);
+        document.getElementById('create-room-btn').addEventListener('click', createRoomServer);
+        document.getElementById('join-room-btn').addEventListener('click', () => joinRoomWithCode());
+        document.getElementById('leave-room-btn').addEventListener('click', returnToHomeScreen);
+        document.getElementById('save-lobby-btn').addEventListener('click', saveCurrentLobbyState);
+        document.getElementById('copy-link-btn').addEventListener('click', copyInviteLink);
+        document.getElementById('prev-btn').addEventListener('click', playPreviousTrack);
+        document.getElementById('play-btn').addEventListener('click', togglePlayPause);
+        document.getElementById('next-btn').addEventListener('click', playNextTrack);
+        document.getElementById('local-file-input').addEventListener('change', handleLocalFileSelect);
+        document.getElementById('add-track-btn').addEventListener('click', addTrackToPlaylist);
+
+        document.getElementById('edit-lobby-name-btn').addEventListener('click', startEditingLobbyName);
+        document.getElementById('lobby-name-display').addEventListener('click', () => {
+            if (isHost) startEditingLobbyName();
+        });
+        document.getElementById('lobby-name-edit-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commitLobbyNameEdit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelLobbyNameEdit();
+            }
+        });
+        document.getElementById('lobby-name-edit-input').addEventListener('blur', commitLobbyNameEdit);
+    </script>
+</body>
+
+</html>
