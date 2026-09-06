@@ -1663,8 +1663,9 @@
                     return;
                 }
                 errorEl.classList.add('hidden');
+                const onSuccess = passwordModalOnSuccess;
                 closePasswordModal();
-                if (passwordModalOnSuccess) passwordModalOnSuccess();
+                if (onSuccess) onSuccess();
             } else {
                 // Host setting/updating a password.
                 const newPassword = val.trim() || null;
