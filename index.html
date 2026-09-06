@@ -80,6 +80,15 @@
 
 <body class="bg-black text-[#F5F5F5] min-h-screen flex items-center justify-center p-4">
 
+    <!-- Hidden YouTube playback engine. Kept as a direct child of <body> —
+         never nested inside any element that gets display:none toggled on
+         it (like main-player-card before a room is joined) — because the
+         YouTube IFrame API can fail to initialize inside display:none
+         ancestors. Positioned off-screen instead of hidden via CSS. -->
+    <div class="fixed w-px h-px overflow-hidden opacity-0 pointer-events-none" style="left:-9999px; top:0;">
+        <div id="youtube-player"></div>
+    </div>
+
     <!-- LANGUAGE SWITCHER -->
     <div id="lang-switcher"
         class="fixed top-4 right-4 z-40 flex items-center gap-1 bg-[#181818]/90 backdrop-blur border border-[#282828] rounded-full p-1 shadow-lg">
@@ -415,9 +424,6 @@
                     </div>
 
                     <audio id="audio-player" class="w-full hidden" controls></audio>
-                    <div class="absolute w-px h-px overflow-hidden opacity-0 pointer-events-none" style="left:-9999px;">
-                        <div id="youtube-player"></div>
-                    </div>
 
                     <div class="flex items-center gap-3 px-1 pb-1">
                         <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
@@ -1033,6 +1039,7 @@
                 events: {
                     onReady: () => {
                         ytPlayerReady = true;
+                        console.log('[SyncBeats] YouTube player ready');
                         applyVolume(parseInt(volumeSlider?.value, 10) || 100, { persist: false });
                         if (pendingYoutubeAction) {
                             const action = pendingYoutubeAction;
@@ -1044,14 +1051,48 @@
                         if (event.data === YT.PlayerState.ENDED && isHost && isCurrentTrackYouTube()) {
                             handleTrackEnded();
                         }
+                    },
+                    onError: (event) => {
+                        // 2 = invalid video id, 5 = HTML5 player error,
+                        // 100 = video not found/private, 101 & 150 = embedding disabled by the video's owner.
+                        const reasons = {
+                            2: 'Invalid YouTube link.',
+                            5: 'This video cannot be played in an embedded player.',
+                            100: 'This video was not found or is private.',
+                            101: "This video's owner has disabled embedding, so it can't be played here.",
+                            150: "This video's owner has disabled embedding, so it can't be played here."
+                        };
+                        const message = reasons[event.data] || 'This YouTube video could not be played.';
+                        console.error('[SyncBeats] YouTube player error', event.data, message);
+
+                        if (isHost && isCurrentTrackYouTube()) {
+                            const track = playlist[currentTrackIndex];
+                            if (track) track.title = `⚠ ${message} (${displayTrackTitle(track.title)})`;
+                            renderPlaylist();
+                            alert(`Couldn't play "${track ? displayTrackTitle(track.title) : 'this track'}":\n${message}\n\nTry a different YouTube link, or skip to the next track.`);
+                            isPlaying = false;
+                            updatePlayerDisplay();
+                            broadcastState();
+                        }
                     }
                 }
             });
         };
 
+        // Guard against the (rare) case where the IFrame API script finishes
+        // loading and fires its ready callback before this point in the page
+        // has run — if the API is already present, initialize immediately.
+        if (window.YT && window.YT.Player) {
+            window.onYouTubeIframeAPIReady();
+        }
+
         function runYoutubeAction({ videoId, time, play }) {
-            if (!ytPlayerReady || !ytPlayer || !videoId) return;
+            if (!ytPlayerReady || !ytPlayer || !videoId) {
+                console.warn('[SyncBeats] runYoutubeAction skipped — player not ready yet', { ytPlayerReady, videoId });
+                return;
+            }
             loadedYoutubeId = videoId;
+            console.log('[SyncBeats]', play ? 'loadVideoById' : 'cueVideoById', videoId, 'at', time);
             if (play) {
                 ytPlayer.loadVideoById({ videoId, startSeconds: Math.max(0, time || 0) });
             } else {
@@ -1109,9 +1150,14 @@
 
         function playCurrentTrack() {
             if (isCurrentTrackYouTube()) {
-                if (ytPlayerReady) ytPlayer.playVideo();
+                if (ytPlayerReady) {
+                    console.log('[SyncBeats] ytPlayer.playVideo()');
+                    ytPlayer.playVideo();
+                } else {
+                    console.warn('[SyncBeats] Tried to play a YouTube track before the player was ready.');
+                }
             } else {
-                audioPlayer.play().catch(() => { });
+                audioPlayer.play().catch((err) => console.warn('[SyncBeats] audioPlayer.play() failed', err));
             }
         }
 
