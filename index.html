@@ -12,6 +12,7 @@
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
         html,
         body {
@@ -414,6 +415,9 @@
                     </div>
 
                     <audio id="audio-player" class="w-full hidden" controls></audio>
+                    <div class="absolute w-px h-px overflow-hidden opacity-0 pointer-events-none" style="left:-9999px;">
+                        <div id="youtube-player"></div>
+                    </div>
 
                     <div class="flex items-center gap-3 px-1 pb-1">
                         <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
@@ -529,11 +533,11 @@
 
                             <div class="space-y-1.5">
                                 <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">
-                                    <span data-i18n="add_url_label">Or Add Direct Audio Stream URL(s)</span>
+                                    <span data-i18n="add_url_label">Or Add Audio Stream / YouTube URL(s)</span>
                                     <span class="text-[#727272] font-normal" data-i18n="one_per_line">(one per
                                         line)</span></label>
-                                <textarea id="track-url-input" rows="3"
-                                    placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"
+                                <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
+                                    placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                                     class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
                                 <button id="add-track-btn"
                                     class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
@@ -722,14 +726,16 @@
                 multi_select_hint: "You can select multiple files at once",
                 uploading: "Uploading to lobby storage...",
                 uploading_progress: "Uploading {i} of {n}: {name}",
-                add_url_label: "Or Add Direct Audio Stream URL(s)",
+                add_url_label: "Or Add Audio Stream / YouTube URL(s)",
                 one_per_line: "(one per line)",
+                track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "Add",
                 queue_tab: "Queue",
                 users_tab: "Users",
                 queue_empty: "Queue is empty",
                 no_one_here: "No one here yet",
                 uploaded_tag: "Uploaded",
+                youtube_tag: "YouTube",
                 make_host_btn: "Make Host",
                 listener_label: "Listener",
                 you_suffix: "(You)",
@@ -798,14 +804,16 @@
                 multi_select_hint: "여러 파일을 한 번에 선택할 수 있습니다",
                 uploading: "로비 저장소에 업로드 중...",
                 uploading_progress: "업로드 중 {i}/{n}: {name}",
-                add_url_label: "또는 오디오 스트림 URL 추가",
+                add_url_label: "또는 오디오 스트림 / 유튜브 URL 추가",
                 one_per_line: "(한 줄에 하나씩)",
+                track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "추가",
                 queue_tab: "대기열",
                 users_tab: "참여자",
                 queue_empty: "대기열이 비어 있습니다",
                 no_one_here: "아직 아무도 없습니다",
                 uploaded_tag: "업로드됨",
+                youtube_tag: "유튜브",
                 make_host_btn: "호스트로 지정",
                 listener_label: "청취자",
                 you_suffix: "(나)",
@@ -874,14 +882,16 @@
                 multi_select_hint: "複数のファイルを一度に選択できます",
                 uploading: "ロビーのストレージにアップロード中...",
                 uploading_progress: "アップロード中 {i}/{n}: {name}",
-                add_url_label: "または音声ストリームURLを追加",
+                add_url_label: "または音声ストリーム/YouTubeのURLを追加",
                 one_per_line: "(1行に1つ)",
+                track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "追加",
                 queue_tab: "キュー",
                 users_tab: "参加者",
                 queue_empty: "キューは空です",
                 no_one_here: "まだ誰もいません",
                 uploaded_tag: "アップロード済み",
+                youtube_tag: "YouTube",
                 make_host_btn: "ホストにする",
                 listener_label: "リスナー",
                 you_suffix: "（あなた）",
@@ -994,6 +1004,151 @@
         let shuffleEnabled = false;
         let shuffleHistory = [];
 
+        // -------------------------------------------------------------
+        // YOUTUBE PLAYBACK (mirrors the <audio> element for tracks that
+        // are YouTube links, since those can't be played through <audio>)
+        // -------------------------------------------------------------
+        let ytPlayer = null;
+        let ytPlayerReady = false;
+        let loadedYoutubeId = null; // videoId currently loaded in ytPlayer
+        let pendingYoutubeAction = null; // { videoId, time, play } queued until the player is ready
+
+        const YOUTUBE_URL_PATTERN = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+
+        function extractYouTubeId(url) {
+            if (!url) return null;
+            const match = String(url).match(YOUTUBE_URL_PATTERN);
+            return match ? match[1] : null;
+        }
+
+        function isCurrentTrackYouTube() {
+            return currentTrackIndex >= 0 && !!playlist[currentTrackIndex] && !!playlist[currentTrackIndex].isYouTube;
+        }
+
+        window.onYouTubeIframeAPIReady = function () {
+            ytPlayer = new YT.Player('youtube-player', {
+                height: '1',
+                width: '1',
+                playerVars: { autoplay: 0, controls: 0, disablekb: 1, modestbranding: 1, playsinline: 1, rel: 0, fs: 0 },
+                events: {
+                    onReady: () => {
+                        ytPlayerReady = true;
+                        applyVolume(parseInt(volumeSlider?.value, 10) || 100, { persist: false });
+                        if (pendingYoutubeAction) {
+                            const action = pendingYoutubeAction;
+                            pendingYoutubeAction = null;
+                            runYoutubeAction(action);
+                        }
+                    },
+                    onStateChange: (event) => {
+                        if (event.data === YT.PlayerState.ENDED && isHost && isCurrentTrackYouTube()) {
+                            handleTrackEnded();
+                        }
+                    }
+                }
+            });
+        };
+
+        function runYoutubeAction({ videoId, time, play }) {
+            if (!ytPlayerReady || !ytPlayer || !videoId) return;
+            loadedYoutubeId = videoId;
+            if (play) {
+                ytPlayer.loadVideoById({ videoId, startSeconds: Math.max(0, time || 0) });
+            } else {
+                ytPlayer.cueVideoById({ videoId, startSeconds: Math.max(0, time || 0) });
+            }
+        }
+
+        // Loads/aligns the YouTube player to match a given track + time,
+        // avoiding a reload (which restarts buffering) if that video is
+        // already the one loaded — used by both host playback and guest sync.
+        function syncYoutubePlayer(track, targetTime, shouldPlay) {
+            if (!track || !track.youtubeId) return;
+
+            if (!ytPlayerReady || !ytPlayer) {
+                pendingYoutubeAction = { videoId: track.youtubeId, time: targetTime, play: shouldPlay };
+                return;
+            }
+
+            if (loadedYoutubeId !== track.youtubeId) {
+                runYoutubeAction({ videoId: track.youtubeId, time: targetTime, play: shouldPlay });
+                return;
+            }
+
+            const current = (typeof ytPlayer.getCurrentTime === 'function') ? (ytPlayer.getCurrentTime() || 0) : 0;
+            if (Math.abs(current - targetTime) > 1.5) {
+                ytPlayer.seekTo(targetTime, true);
+            }
+            if (shouldPlay) {
+                ytPlayer.playVideo();
+            } else {
+                ytPlayer.pauseVideo();
+            }
+        }
+
+        function stopYoutubePlayback() {
+            loadedYoutubeId = null;
+            if (ytPlayerReady && ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+                ytPlayer.stopVideo();
+            }
+        }
+
+        function getPlaybackTime() {
+            if (isCurrentTrackYouTube()) {
+                return (ytPlayerReady && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') ? (ytPlayer.getCurrentTime() || 0) : 0;
+            }
+            return audioPlayer.currentTime || 0;
+        }
+
+        function getPlaybackDuration() {
+            if (isCurrentTrackYouTube()) {
+                return (ytPlayerReady && ytPlayer && typeof ytPlayer.getDuration === 'function') ? (ytPlayer.getDuration() || 0) : 0;
+            }
+            return audioPlayer.duration || 0;
+        }
+
+        function playCurrentTrack() {
+            if (isCurrentTrackYouTube()) {
+                if (ytPlayerReady) ytPlayer.playVideo();
+            } else {
+                audioPlayer.play().catch(() => { });
+            }
+        }
+
+        function pauseCurrentTrack() {
+            if (isCurrentTrackYouTube()) {
+                if (ytPlayerReady) ytPlayer.pauseVideo();
+            } else {
+                audioPlayer.pause();
+            }
+        }
+
+        function seekCurrentTrack(seconds) {
+            if (isCurrentTrackYouTube()) {
+                if (ytPlayerReady) ytPlayer.seekTo(seconds, true);
+            } else {
+                audioPlayer.currentTime = seconds;
+            }
+        }
+
+        // Fetches a display title for a YouTube link via the (CORS-enabled)
+        // oEmbed endpoint. Best-effort only — if it fails, the video ID
+        // stays as the visible title.
+        function fetchYoutubeTitle(track) {
+            const url = `https://www.youtube.com/oembed?url=${encodeURIComponent(track.url)}&format=json`;
+            fetch(url)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.title && playlist.includes(track)) {
+                        track.title = data.title;
+                        renderPlaylist();
+                        updatePlayerDisplay();
+                        if (isHost) broadcastState();
+                    }
+                })
+                .catch(() => { });
+        }
+
         const audioPlayer = document.getElementById('audio-player');
         const seekSlider = document.getElementById('seek-slider');
         const currentTimeEl = document.getElementById('current-time');
@@ -1073,6 +1228,11 @@
             const clamped = Math.max(0, Math.min(100, value));
             audioPlayer.volume = clamped / 100;
 
+            if (ytPlayerReady && ytPlayer && typeof ytPlayer.setVolume === 'function') {
+                ytPlayer.setVolume(clamped);
+                if (clamped === 0) ytPlayer.mute(); else ytPlayer.unMute();
+            }
+
             if (volumeSlider && updateSlider) volumeSlider.value = String(clamped);
             if (volumeValueEl) volumeValueEl.innerText = String(clamped);
 
@@ -1110,7 +1270,9 @@
                 url: track.url,
                 filePath: track.filePath || null,
                 isLocal: track.isLocal,
-                duration: track.duration || null
+                duration: track.duration || null,
+                isYouTube: track.isYouTube || false,
+                youtubeId: track.youtubeId || null
             }));
         }
 
@@ -1157,7 +1319,7 @@
                     lobby_name: lobbyName || '',
                     playlist: serializablePlaylist(),
                     current_track_index: currentTrackIndex,
-                    current_time: audioPlayer.currentTime || 0,
+                    current_time: getPlaybackTime(),
                     is_playing: isPlaying,
                     loop_mode: loopMode,
                     shuffle: shuffleEnabled,
@@ -1294,6 +1456,7 @@
             audioPlayer.pause();
             audioPlayer.src = "";
             isPlaying = false;
+            stopYoutubePlayback();
 
             if (roomChannel) {
                 supabaseClient?.removeChannel(roomChannel);
@@ -1470,9 +1633,14 @@
                 startRoomSession();
 
                 if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
-                    audioPlayer.src = playlist[currentTrackIndex].url;
-                    if (typeof lobbyRow.current_time === 'number') {
-                        audioPlayer.currentTime = lobbyRow.current_time;
+                    const joinTrack = playlist[currentTrackIndex];
+                    const joinTime = (typeof lobbyRow.current_time === 'number') ? lobbyRow.current_time : 0;
+
+                    if (joinTrack.isYouTube) {
+                        syncYoutubePlayer(joinTrack, joinTime, false);
+                    } else {
+                        audioPlayer.src = joinTrack.url;
+                        audioPlayer.currentTime = joinTime;
                     }
                     renderPlaylist();
                     updatePlayerDisplay();
@@ -1510,6 +1678,19 @@
         function unlockAudioSession() {
             document.getElementById('join-overlay').classList.add('hidden');
             audioPlayer.play().then(() => audioPlayer.pause()).catch(() => { });
+
+            // Also "unlock" the YouTube iframe for autoplay while we still
+            // have the user gesture from this click.
+            if (ytPlayerReady && ytPlayer) {
+                try {
+                    ytPlayer.mute();
+                    ytPlayer.playVideo();
+                    setTimeout(() => {
+                        ytPlayer.pauseVideo();
+                        applyVolume(parseInt(volumeSlider?.value, 10) || 100, { persist: false });
+                    }, 200);
+                } catch (_) { }
+            }
         }
 
         function updateRoleUI() {
@@ -1863,7 +2044,7 @@
                     isPlaying,
                     loopMode,
                     shuffleEnabled,
-                    currentTime: audioPlayer.currentTime,
+                    currentTime: getPlaybackTime(),
                     timestamp: Date.now()
                 }
             });
@@ -1886,25 +2067,33 @@
 
             if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
                 const targetTrack = playlist[currentTrackIndex];
-                if (audioPlayer.src !== targetTrack.url) {
-                    audioPlayer.src = targetTrack.url;
-                }
-
                 const latency = (Date.now() - payload.timestamp) / 1000;
                 const targetTime = payload.currentTime + (isPlaying ? latency : 0);
 
-                if (Math.abs(audioPlayer.currentTime - targetTime) > 1.5) {
-                    audioPlayer.currentTime = targetTime;
-                }
-
-                if (isPlaying) {
-                    audioPlayer.play().catch(() => { });
-                } else {
+                if (targetTrack.isYouTube) {
                     audioPlayer.pause();
+                    syncYoutubePlayer(targetTrack, targetTime, isPlaying);
+                } else {
+                    stopYoutubePlayback();
+
+                    if (audioPlayer.src !== targetTrack.url) {
+                        audioPlayer.src = targetTrack.url;
+                    }
+
+                    if (Math.abs(audioPlayer.currentTime - targetTime) > 1.5) {
+                        audioPlayer.currentTime = targetTime;
+                    }
+
+                    if (isPlaying) {
+                        audioPlayer.play().catch(() => { });
+                    } else {
+                        audioPlayer.pause();
+                    }
                 }
             } else {
                 audioPlayer.pause();
                 audioPlayer.src = "";
+                stopYoutubePlayback();
             }
 
             updatePlayerDisplay();
@@ -1913,29 +2102,42 @@
         // -------------------------------------------------------------
         // AUDIO PLAYER & TIMESTAMP SYNC EVENTS
         // -------------------------------------------------------------
-        audioPlayer.ontimeupdate = () => {
-            if (!isSeeking && audioPlayer.duration) {
-                seekSlider.value = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                currentTimeEl.innerText = formatTime(audioPlayer.currentTime);
+        function updateSeekUI() {
+            if (isSeeking) return;
+            const duration = getPlaybackDuration();
+            if (duration) {
+                seekSlider.value = (getPlaybackTime() / duration) * 100;
+                currentTimeEl.innerText = formatTime(getPlaybackTime());
+                totalDurationEl.innerText = formatTime(duration);
+                if (isHost) seekSlider.removeAttribute('disabled');
             }
+        }
+
+        audioPlayer.ontimeupdate = () => {
+            if (!isCurrentTrackYouTube()) updateSeekUI();
         };
 
         audioPlayer.onloadedmetadata = () => {
-            totalDurationEl.innerText = formatTime(audioPlayer.duration);
-            if (isHost) seekSlider.removeAttribute('disabled');
+            if (!isCurrentTrackYouTube()) updateSeekUI();
         };
+
+        // <audio> fires ontimeupdate on its own; the YouTube iframe player
+        // has no equivalent event, so poll it while a YouTube track is active.
+        setInterval(() => {
+            if (isCurrentTrackYouTube()) updateSeekUI();
+        }, 500);
 
         seekSlider.oninput = () => {
             if (!isHost) return;
             isSeeking = true;
-            const seekTime = (seekSlider.value / 100) * audioPlayer.duration;
+            const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
             currentTimeEl.innerText = formatTime(seekTime);
         };
 
         seekSlider.onchange = () => {
             if (!isHost) return;
-            const seekTime = (seekSlider.value / 100) * audioPlayer.duration;
-            audioPlayer.currentTime = seekTime;
+            const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
+            seekCurrentTrack(seekTime);
             isSeeking = false;
             broadcastState();
         };
@@ -2040,15 +2242,30 @@
             if (urls.length === 0) return;
 
             urls.forEach((url, i) => {
-                const cleanTitle = url.split('/').pop().split('?')[0] || `Track ${playlist.length + 1}`;
+                const youtubeId = extractYouTubeId(url);
 
-                const track = {
-                    id: Date.now() + i,
-                    title: decodeURIComponent(cleanTitle),
-                    url: url,
-                    filePath: null,
-                    isLocal: false
-                };
+                let track;
+                if (youtubeId) {
+                    track = {
+                        id: Date.now() + i,
+                        title: `YouTube (${youtubeId})`,
+                        url: url,
+                        filePath: null,
+                        isLocal: false,
+                        isYouTube: true,
+                        youtubeId: youtubeId
+                    };
+                    fetchYoutubeTitle(track);
+                } else {
+                    const cleanTitle = url.split('/').pop().split('?')[0] || `Track ${playlist.length + 1}`;
+                    track = {
+                        id: Date.now() + i,
+                        title: decodeURIComponent(cleanTitle),
+                        url: url,
+                        filePath: null,
+                        isLocal: false
+                    };
+                }
 
                 playlist.push(track);
 
@@ -2071,12 +2288,19 @@
             shuffleHistory.push(index);
             const track = playlist[index];
 
-            if (track.url) {
-                audioPlayer.src = track.url;
-                audioPlayer.currentTime = 0;
+            if (track.isYouTube) {
+                audioPlayer.pause();
+                audioPlayer.removeAttribute('src');
+                syncYoutubePlayer(track, 0, isPlaying);
+            } else {
+                stopYoutubePlayback();
+                if (track.url) {
+                    audioPlayer.src = track.url;
+                    audioPlayer.currentTime = 0;
 
-                if (isPlaying) {
-                    audioPlayer.play().catch(() => { });
+                    if (isPlaying) {
+                        audioPlayer.play().catch(() => { });
+                    }
                 }
             }
 
@@ -2091,9 +2315,9 @@
             isPlaying = !isPlaying;
 
             if (isPlaying) {
-                audioPlayer.play().catch(() => { });
+                playCurrentTrack();
             } else {
-                audioPlayer.pause();
+                pauseCurrentTrack();
             }
 
             updatePlayerDisplay();
@@ -2175,12 +2399,12 @@
             if (loopOneBadge) loopOneBadge.classList.toggle('hidden', loopMode !== 'one');
         }
 
-        audioPlayer.onended = () => {
+        function handleTrackEnded() {
             if (!isHost) return;
 
             if (loopMode === 'one') {
-                audioPlayer.currentTime = 0;
-                audioPlayer.play().catch(() => { });
+                seekCurrentTrack(0);
+                playCurrentTrack();
                 broadcastState();
                 return;
             }
@@ -2199,6 +2423,10 @@
                 updatePlayerDisplay();
                 broadcastState();
             }
+        }
+
+        audioPlayer.onended = () => {
+            if (!isCurrentTrackYouTube()) handleTrackEnded();
         };
 
         // -------------------------------------------------------------
@@ -2234,7 +2462,7 @@
         }
 
         function probeDuration(track) {
-            if (!track || !track.url || track.duration || track._probing) return;
+            if (!track || !track.url || track.duration || track._probing || track.isYouTube) return;
             track._probing = true;
 
             const probe = new Audio();
@@ -2305,6 +2533,7 @@
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(displayTrackTitle(track.title))}</p>
               ${track.isLocal ? `<span class="text-[10px] text-[#1ED760] font-medium">${t('uploaded_tag')}</span>` : ''}
+              ${track.isYouTube ? `<span class="text-[10px] text-[#FF0000] font-medium">${t('youtube_tag')}</span>` : ''}
             </div>
 
             <span class="text-[11px] font-mono text-[#727272] flex-shrink-0 tabular-nums">${durationLabel}</span>
@@ -2371,6 +2600,7 @@
                 audioPlayer.pause();
                 audioPlayer.removeAttribute('src');
                 audioPlayer.load();
+                stopYoutubePlayback();
                 updatePlayerDisplay();
             } else if (removingCurrent) {
                 const nextIndex = Math.min(index, playlist.length - 1);
