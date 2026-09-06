@@ -1473,7 +1473,7 @@
 
             // Host never needs a password to their own room.
             if (roomPassword_needsPrompt(lobbyRow)) {
-                openPasswordModal('join', proceedWithJoin);
+                openPasswordModal('join', proceedWithJoin, lobbyRow.password);
             } else {
                 proceedWithJoin();
             }
@@ -1610,10 +1610,12 @@
         // -------------------------------------------------------------
         let passwordModalMode = 'join'; // 'join' | 'set'
         let passwordModalOnSuccess = null;
+        let pendingJoinPassword = null; // the actual password to check against while joining
 
-        function openPasswordModal(mode, onSuccess) {
+        function openPasswordModal(mode, onSuccess, expectedPassword = null) {
             passwordModalMode = mode;
             passwordModalOnSuccess = onSuccess || null;
+            pendingJoinPassword = mode === 'join' ? expectedPassword : null;
 
             const titleEl = document.getElementById('password-modal-title');
             const descEl = document.getElementById('password-modal-desc');
@@ -1656,7 +1658,7 @@
             const val = input.value; // don't trim — passwords may be intentionally spaced
 
             if (passwordModalMode === 'join') {
-                if (val !== roomPassword) {
+                if (val !== pendingJoinPassword) {
                     errorEl.classList.remove('hidden');
                     return;
                 }
