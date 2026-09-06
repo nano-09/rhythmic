@@ -498,7 +498,7 @@
                             </button>
                         </div>
 
-                        <div class="space-y-3 pt-4 border-t border-[#282828]">
+                        <div id="host-only-track-input-section" class="space-y-3 pt-4 border-t border-[#282828]">
 
                             <div class="space-y-1.5">
                                 <label class="block text-xs font-semibold text-[#B3B3B3]"
@@ -1507,6 +1507,7 @@
             const saveBtn = document.getElementById('save-lobby-btn');
             const editNameBtn = document.getElementById('edit-lobby-name-btn');
             const setPasswordBtn = document.getElementById('set-password-btn');
+            const trackInputSection = document.getElementById('host-only-track-input-section');
             const controls = document.querySelectorAll('#host-controls button, #host-controls input, #host-controls label');
 
             if (isHost) {
@@ -1515,6 +1516,7 @@
                 saveBtn.classList.remove('hidden');
                 editNameBtn?.classList.remove('hidden');
                 setPasswordBtn?.classList.remove('hidden');
+                trackInputSection?.classList.remove('hidden');
                 controls.forEach(el => {
                     if (el.tagName === 'LABEL') {
                         el.classList.remove('pointer-events-none', 'opacity-50');
@@ -1528,6 +1530,7 @@
                 saveBtn.classList.add('hidden');
                 editNameBtn?.classList.add('hidden');
                 setPasswordBtn?.classList.add('hidden');
+                trackInputSection?.classList.add('hidden');
                 controls.forEach(el => {
                     if (el.tagName === 'LABEL') {
                         el.classList.add('pointer-events-none', 'opacity-50');
