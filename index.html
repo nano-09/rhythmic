@@ -1807,6 +1807,7 @@
 
             isHost = false;
             updateRoleUI();
+            renderPlaylist();
             roomChannel.track({ clientId, nickname, isHost, joinedAt });
             saveMembershipSnapshot();
 
@@ -1831,6 +1832,7 @@
             }
 
             updateRoleUI();
+            renderPlaylist();
             roomChannel?.track({ clientId, nickname, isHost, joinedAt });
             saveMembershipSnapshot();
         }
