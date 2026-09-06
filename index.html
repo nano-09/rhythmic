@@ -1044,6 +1044,15 @@
             return div.innerHTML;
         }
 
+        // Strips a trailing known audio extension for display only — the
+        // underlying track.title/url/filePath are left untouched, so
+        // playback, storage paths, and re-uploads are unaffected.
+        const AUDIO_EXTENSION_PATTERN = /\.(mp3|wav|ogg|oga|aac|m4a|flac|wma|opus|webm|mp4|3gp)$/i;
+        function displayTrackTitle(title) {
+            if (!title) return title;
+            return title.replace(AUDIO_EXTENSION_PATTERN, '');
+        }
+
         // -------------------------------------------------------------
         // VOLUME (PER-DEVICE, LOCAL ONLY)
         // Intentionally never written to Supabase or sent over the
@@ -2202,7 +2211,7 @@
             const pauseIcon = document.getElementById('pause-icon');
 
             if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
-                titleEl.innerText = playlist[currentTrackIndex].title;
+                titleEl.innerText = displayTrackTitle(playlist[currentTrackIndex].title);
                 statusEl.innerText = isPlaying ? t('playing_sync') : t('paused');
             } else {
                 titleEl.innerText = t('no_track');
@@ -2294,7 +2303,7 @@
             </div>
 
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(track.title)}</p>
+              <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(displayTrackTitle(track.title))}</p>
               ${track.isLocal ? `<span class="text-[10px] text-[#1ED760] font-medium">${t('uploaded_tag')}</span>` : ''}
             </div>
 
