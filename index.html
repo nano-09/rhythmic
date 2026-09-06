@@ -68,11 +68,25 @@
         input[type="range"] {
             accent-color: #1DB954;
         }
+
+        [lang="ko"],
+        [lang="ja"] {
+            letter-spacing: 0;
+        }
     </style>
 </head>
 
 <body class="bg-black text-[#F5F5F5] min-h-screen flex items-center justify-center p-4">
 
+    <!-- LANGUAGE SWITCHER -->
+    <div id="lang-switcher"
+        class="fixed top-4 right-4 z-40 flex items-center gap-1 bg-[#181818]/90 backdrop-blur border border-[#282828] rounded-full p-1 shadow-lg">
+        <button data-lang="en" class="lang-btn px-3 py-1.5 rounded-full text-xs font-bold transition-all">EN</button>
+        <button data-lang="ko" class="lang-btn px-3 py-1.5 rounded-full text-xs font-bold transition-all">한국어</button>
+        <button data-lang="ja" class="lang-btn px-3 py-1.5 rounded-full text-xs font-bold transition-all">日本語</button>
+    </div>
+
+    <!-- JOIN / UNLOCK AUDIO OVERLAY -->
     <div id="join-overlay"
         class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
         <div class="bg-[#181818]/90 p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
@@ -85,12 +99,77 @@
                 </svg>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-white mb-1">Join Sync Session</h2>
-                <p class="text-xs text-[#A7A7A7]">Click below to enable synchronized audio playback in your browser.</p>
+                <h2 class="text-xl font-bold text-white mb-1" data-i18n="join_overlay_title">Join Sync Session</h2>
+                <p class="text-xs text-[#A7A7A7]" data-i18n="join_overlay_desc">Click below to enable synchronized audio
+                    playback in your browser.</p>
             </div>
             <button id="unlock-btn"
-                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                data-i18n="enter_room_btn">
                 Enter Room & Start Audio
+            </button>
+        </div>
+    </div>
+
+    <!-- PASSWORD MODAL (used both for joining a locked room and for host setting a password) -->
+    <div id="password-modal"
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div
+            class="bg-[#181818]/95 p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
+            <div class="w-14 h-14 mx-auto bg-[#282828] rounded-2xl flex items-center justify-center">
+                <svg class="w-7 h-7 text-[#1ED760]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h2 id="password-modal-title" class="text-lg font-bold text-white mb-1"
+                    data-i18n="password_modal_title_join">Password Required</h2>
+                <p id="password-modal-desc" class="text-xs text-[#A7A7A7]" data-i18n="password_modal_desc_join">This
+                    room is password protected. Enter the password to join.</p>
+            </div>
+            <div class="space-y-2">
+                <div class="relative">
+                    <input id="password-modal-input" type="password" maxlength="40"
+                        data-i18n-placeholder="password_placeholder" placeholder="Enter password"
+                        class="w-full bg-[#000000] border border-[#282828] text-center text-base font-medium rounded-2xl pl-3 pr-11 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                    <button type="button" id="password-modal-toggle-btn" title="Show password"
+                        data-i18n-title="show_password_title"
+                        class="password-toggle-btn absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-[#727272] hover:text-[#D1D1D1] transition-colors rounded-lg">
+                        <svg class="eye-icon-show w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <svg class="eye-icon-hide w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <p id="password-modal-error" class="text-xs text-red-400 hidden" data-i18n="password_error">Incorrect
+                    password.</p>
+            </div>
+            <div class="flex gap-2.5">
+                <button id="password-modal-cancel-btn"
+                    class="flex-1 bg-[#282828] hover:bg-[#3E3E3E] text-white font-semibold py-2.5 px-4 rounded-full transition-all"
+                    data-i18n="cancel_btn">
+                    Cancel
+                </button>
+                <button id="password-modal-submit-btn"
+                    class="flex-1 bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-2.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all"
+                    data-i18n="submit_btn">
+                    Submit
+                </button>
+            </div>
+            <button id="password-modal-remove-btn"
+                class="hidden text-xs font-semibold text-red-400 hover:text-red-300 underline underline-offset-2"
+                data-i18n="remove_password_btn">
+                Remove Password
             </button>
         </div>
     </div>
@@ -108,20 +187,24 @@
                     </svg>
                 </div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
-                <p class="text-xs text-[#A7A7A7]">What should we call you?</p>
+                <p class="text-xs text-[#A7A7A7]" data-i18n="nick_subtitle">What should we call you?</p>
             </div>
 
             <div class="space-y-3">
-                <label for="nickname-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Your
+                <label for="nickname-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
+                    data-i18n="nick_label">Your
                     Nickname</label>
-                <input id="nickname-input" type="text" maxlength="20" placeholder="e.g. Jamie"
+                <input id="nickname-input" type="text" maxlength="20" data-i18n-placeholder="nick_placeholder"
+                    placeholder="e.g. Jamie"
                     class="w-full bg-[#000000] border border-[#282828] text-center text-lg font-semibold rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                <p id="nickname-error-msg" class="text-xs text-red-400 text-center hidden">Please enter a nickname
+                <p id="nickname-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="nick_error">Please
+                    enter a nickname
                     (2-20 characters).</p>
             </div>
 
             <button id="nickname-continue-btn"
-                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                data-i18n="continue_btn">
                 Continue
             </button>
         </div>
@@ -138,19 +221,50 @@
                     </svg>
                 </div>
                 <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
-                <p class="text-xs text-[#A7A7A7]">Listen together in real-time</p>
+                <p class="text-xs text-[#A7A7A7]" data-i18n="room_subtitle">Listen together in real-time</p>
                 <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#727272] pt-1">
-                    <span>Playing as <span id="display-nickname" class="text-[#B3B3B3] font-semibold"></span></span>
+                    <span><span data-i18n="playing_as">Playing as</span> <span id="display-nickname"
+                            class="text-[#B3B3B3] font-semibold"></span></span>
                     <button id="change-nickname-btn"
-                        class="text-[#1ED760] hover:text-[#4CD97B] underline underline-offset-2">change</button>
+                        class="text-[#1ED760] hover:text-[#4CD97B] underline underline-offset-2"
+                        data-i18n="change">change</button>
                 </div>
             </div>
 
             <div class="space-y-1.5">
-                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Lobby
-                    Name <span class="text-[#727272] font-normal">(optional)</span></label>
-                <input id="lobby-name-input" type="text" maxlength="40" placeholder="e.g. Friday Night Vibes"
+                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
+                    <span data-i18n="lobby_name_label">Lobby Name</span>
+                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+                <input id="lobby-name-input" type="text" maxlength="40" data-i18n-placeholder="lobby_name_placeholder"
+                    placeholder="e.g. Friday Night Vibes"
                     class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+            </div>
+
+            <div class="space-y-1.5">
+                <label for="lobby-password-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
+                    <span data-i18n="lobby_password_label">Room Password</span>
+                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+                <div class="relative">
+                    <input id="lobby-password-input" type="password" maxlength="40"
+                        data-i18n-placeholder="lobby_password_placeholder" placeholder="Leave blank for no password"
+                        class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl pl-3 pr-11 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                    <button type="button" id="lobby-password-toggle-btn" title="Show password"
+                        data-i18n-title="show_password_title"
+                        class="password-toggle-btn absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-[#727272] hover:text-[#D1D1D1] transition-colors rounded-lg">
+                        <svg class="eye-icon-show w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <svg class="eye-icon-hide w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button id="create-room-btn"
@@ -158,12 +272,13 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                <span>Create New Room</span>
+                <span data-i18n="create_room_btn">Create New Room</span>
             </button>
 
             <div id="saved-lobbies-section" class="space-y-2.5 pt-2 hidden">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-[#A7A7A7] uppercase tracking-wider">Your Recent Lobbies</span>
+                    <span class="text-xs font-bold text-[#A7A7A7] uppercase tracking-wider"
+                        data-i18n="recent_lobbies">Your Recent Lobbies</span>
                     <span id="saved-lobbies-count"
                         class="text-[10px] font-semibold text-[#727272] bg-[#282828] px-2 py-0.5 rounded-full">0</span>
                 </div>
@@ -172,27 +287,31 @@
 
             <div class="relative flex py-1 items-center">
                 <div class="flex-grow border-t border-[#282828]"></div>
-                <span class="flex-shrink mx-4 text-[10px] text-[#727272] font-bold uppercase tracking-widest">or join
+                <span class="flex-shrink mx-4 text-[10px] text-[#727272] font-bold uppercase tracking-widest"
+                    data-i18n="or_join_existing">or join
                     existing</span>
                 <div class="flex-grow border-t border-[#282828]"></div>
             </div>
 
             <div class="space-y-3">
-                <label for="room-code-input" class="block text-xs font-medium text-[#B3B3B3] text-center">Enter 6-Digit
+                <label for="room-code-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
+                    data-i18n="room_code_label">Enter 6-Digit
                     Room Code</label>
                 <div class="flex gap-2.5">
                     <input id="room-code-input" type="text" maxlength="6" placeholder="839201"
-                        class="flex-1 bg-[#000000] border border-[#282828] text-center font-mono text-lg font-semibold tracking-widest uppercase rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-center font-mono text-lg font-semibold tracking-widest uppercase rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
                     <button id="join-room-btn"
-                        class="bg-[#282828] hover:bg-[#3E3E3E] active:bg-[#282828] text-white font-semibold px-6 py-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 flex items-center gap-2">
-                        <span>Join</span>
-                        <svg class="w-4 h-4 text-[#1ED760]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="bg-[#282828] hover:bg-[#3E3E3E] active:bg-[#282828] text-white font-semibold px-6 py-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 flex items-center justify-center gap-2 flex-shrink-0 whitespace-nowrap">
+                        <span data-i18n="join_btn">Join</span>
+                        <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                         </svg>
                     </button>
                 </div>
-                <p id="room-error-msg" class="text-xs text-red-400 text-center hidden">Please enter a valid room code.
+                <p id="room-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="room_error">Please
+                    enter a valid room code.
                 </p>
             </div>
         </div>
@@ -206,7 +325,7 @@
                     <input id="lobby-name-edit-input" type="text" maxlength="40"
                         class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
                 </div>
-                <button id="edit-lobby-name-btn" title="Rename Lobby"
+                <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
                     class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -214,11 +333,20 @@
                         </path>
                     </svg>
                 </button>
+                <button id="set-password-btn" title="Set Room Password" data-i18n-title="set_password_title"
+                    class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
+                    <svg id="password-lock-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>
+                </button>
             </div>
 
             <div class="flex justify-between items-center border-b border-[#282828]/80 pb-4">
                 <div class="flex items-center gap-2">
-                    <button id="leave-room-btn" title="Return to Lobby Select"
+                    <button id="leave-room-btn" title="Return to Lobby Select" data-i18n-title="leave_room_title"
                         class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -228,7 +356,8 @@
                     </button>
 
                     <span id="role-badge"
-                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3]">
+                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3]"
+                        data-i18n="connecting">
                         Connecting...
                     </span>
                 </div>
@@ -241,11 +370,12 @@
                                 d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
                             </path>
                         </svg>
-                        <span>Save</span>
+                        <span data-i18n="save_btn">Save</span>
                     </button>
 
                     <div class="bg-[#000000] border border-[#282828] px-3 py-1.5 rounded-full flex items-center gap-2">
-                        <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider">Code:</span>
+                        <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider"
+                            data-i18n="code_label">Code:</span>
                         <span id="active-room-code"
                             class="text-xs font-mono font-bold text-[#1ED760] tracking-wider">------</span>
                     </div>
@@ -257,7 +387,7 @@
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
                             </path>
                         </svg>
-                        <span>Copy</span>
+                        <span data-i18n="copy_btn">Copy</span>
                     </button>
                 </div>
             </div>
@@ -267,7 +397,8 @@
                 <!-- LEFT COLUMN: Now Playing + Transport + Add Tracks -->
                 <div class="space-y-6 min-w-0">
                     <div class="text-center space-y-1.5 py-1">
-                        <p id="current-track-title" class="text-lg font-bold text-white truncate px-4">No Track
+                        <p id="current-track-title" class="text-lg font-bold text-white truncate px-4"
+                            data-i18n="no_track">No Track
                             Selected</p>
                         <div class="flex items-center justify-center gap-2">
                             <span class="relative flex h-2 w-2">
@@ -275,12 +406,35 @@
                                     class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1ED760] opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2 w-2 bg-[#1DB954]"></span>
                             </span>
-                            <p id="player-status-text" class="text-xs font-medium text-[#A7A7A7]">Waiting for
+                            <p id="player-status-text" class="text-xs font-medium text-[#A7A7A7]"
+                                data-i18n="waiting_playback">Waiting for
                                 playback...</p>
                         </div>
                     </div>
 
                     <audio id="audio-player" class="w-full hidden" controls></audio>
+
+                    <div class="flex items-center gap-3 px-1 pb-1">
+                        <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
+                            class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
+                            <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07">
+                                </path>
+                            </svg>
+                            <svg id="volume-icon-muted" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"></path>
+                            </svg>
+                        </button>
+                        <input id="volume-slider" type="range" min="0" max="100" value="100" step="1"
+                            title="Your volume (only affects your device)" data-i18n-title="volume_title"
+                            class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none" />
+                        <span id="volume-value"
+                            class="text-[10px] font-mono text-[#727272] w-7 text-right flex-shrink-0">100</span>
+                    </div>
 
                     <div id="host-controls" class="space-y-4">
 
@@ -295,7 +449,18 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-center gap-8 pt-1">
+                        <div class="flex items-center justify-center gap-5 pt-1">
+                            <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4l5 5m0 0V5m0 4H5m11 6l5 5m0 0v-4m0 4h-4M4 20l16-16">
+                                    </path>
+                                </svg>
+                                <span id="shuffle-dot"
+                                    class="hidden absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#1ED760]"></span>
+                            </button>
+
                             <button id="prev-btn"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
                                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -320,17 +485,30 @@
                                     <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                                 </svg>
                             </button>
+
+                            <button id="loop-btn" title="Repeat" data-i18n-title="loop_title"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-5.36M20 15a9 9 0 01-14.13 5.36">
+                                    </path>
+                                </svg>
+                                <span id="loop-one-badge"
+                                    class="hidden absolute -top-1 -right-1.5 text-[8px] font-black text-black bg-[#1ED760] rounded-full w-3 h-3 flex items-center justify-center">1</span>
+                            </button>
                         </div>
 
                         <div class="space-y-3 pt-4 border-t border-[#282828]">
 
                             <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-[#B3B3B3]">Upload Local MP3 / Audio
+                                <label class="block text-xs font-semibold text-[#B3B3B3]"
+                                    data-i18n="upload_label">Upload Local MP3 / Audio
                                     Files</label>
                                 <div class="flex gap-2">
                                     <label for="local-file-input"
                                         class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
-                                        <span id="file-input-label" class="truncate">Choose MP3 file(s)...</span>
+                                        <span id="file-input-label" class="truncate" data-i18n="choose_files">Choose MP3
+                                            file(s)...</span>
                                         <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
                                             stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -341,30 +519,29 @@
                                     <input id="local-file-input" type="file" multiple
                                         accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
                                 </div>
-                                <p class="text-[10px] text-[#727272]">You can select multiple files at once</p>
+                                <p class="text-[10px] text-[#727272]" data-i18n="multi_select_hint">You can select
+                                    multiple files at once</p>
                                 <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
                                     storage...
                                 </p>
                             </div>
 
                             <div class="space-y-1.5">
-                                <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">Or
-                                    Add Direct
-                                    Audio Stream URL(s) <span class="text-[#727272] font-normal">(one per
+                                <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">
+                                    <span data-i18n="add_url_label">Or Add Direct Audio Stream URL(s)</span>
+                                    <span class="text-[#727272] font-normal" data-i18n="one_per_line">(one per
                                         line)</span></label>
-                                <div class="flex gap-2 items-end">
-                                    <textarea id="track-url-input" rows="1"
-                                        placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"
-                                        class="flex-1 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
-                                    <button id="add-track-btn"
-                                        class="bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex-shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        <span>Add</span>
-                                    </button>
-                                </div>
+                                <textarea id="track-url-input" rows="3"
+                                    placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"
+                                    class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
+                                <button id="add-track-btn"
+                                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span data-i18n="add_btn">Add</span>
+                                </button>
                             </div>
 
                         </div>
@@ -382,7 +559,7 @@
                                     d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
                                 </path>
                             </svg>
-                            <span>Queue</span>
+                            <span data-i18n="queue_tab">Queue</span>
                             <span id="tab-queue-count"
                                 class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
                         </button>
@@ -393,7 +570,7 @@
                                     d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-1.13-7.84">
                                 </path>
                             </svg>
-                            <span>Users</span>
+                            <span data-i18n="users_tab">Users</span>
                             <span id="tab-users-count"
                                 class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
                         </button>
@@ -402,8 +579,8 @@
                     <div id="queue-tab-panel" class="flex-1 min-h-0 mt-4">
                         <ul id="playlist-container"
                             class="space-y-1.5 h-full max-h-[280px] md:max-h-[420px] overflow-y-auto pr-1">
-                            <li
-                                class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
+                            <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl"
+                                data-i18n="queue_empty">
                                 Queue is empty
                             </li>
                         </ul>
@@ -434,6 +611,45 @@
         //     SUPABASE_URL: 'https://YOUR-PROJECT.supabase.co',
         //     SUPABASE_ANON_KEY: 'YOUR-ANON-KEY'
         //   };
+        //
+        // REQUIRED DATABASE TABLES (run in the Supabase SQL editor):
+        //
+        //   create table if not exists public.lobbies (
+        //     room_id text primary key,
+        //     lobby_name text default '',
+        //     host_client_id text,
+        //     password text,
+        //     playlist jsonb default '[]'::jsonb,
+        //     current_track_index integer default -1,
+        //     current_time double precision default 0,
+        //     is_playing boolean default false,
+        //     loop_mode text default 'off',
+        //     shuffle boolean default false,
+        //     updated_at timestamptz default now()
+        //   );
+        //
+        //   create table if not exists public.lobby_members (
+        //     id uuid primary key default gen_random_uuid(),
+        //     room_id text not null,
+        //     client_id text not null,
+        //     nickname text,
+        //     role text default 'guest',
+        //     lobby_name text,
+        //     track_count integer default 0,
+        //     updated_at timestamptz default now(),
+        //     unique (room_id, client_id)
+        //   );
+        //
+        //   alter table public.lobbies enable row level security;
+        //   alter table public.lobby_members enable row level security;
+        //   create policy "public read lobbies" on public.lobbies for select using (true);
+        //   create policy "public write lobbies" on public.lobbies for insert with check (true);
+        //   create policy "public update lobbies" on public.lobbies for update using (true);
+        //   create policy "public read members" on public.lobby_members for select using (true);
+        //   create policy "public write members" on public.lobby_members for insert with check (true);
+        //   create policy "public update members" on public.lobby_members for update using (true);
+        //   create policy "public delete members" on public.lobby_members for delete using (true);
+        //
         const SUPABASE_URL =
             import.meta.env?.VITE_SUPABASE_URL ||
             window.SYNC_BEATS_CONFIG?.SUPABASE_URL ||
@@ -443,16 +659,308 @@
             window.SYNC_BEATS_CONFIG?.SUPABASE_ANON_KEY ||
             '';
         const BUCKET_NAME = 'audio-bucket'; // Supabase storage bucket name
+        const LOBBIES_TABLE = 'lobbies';
+        const MEMBERS_TABLE = 'lobby_members';
 
         let supabaseClient = null;
         if (SUPABASE_URL && SUPABASE_ANON_KEY) {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         } else {
-            console.warn('Sync Beats: Supabase URL/key not set — realtime sync and storage uploads are disabled. See the config comment above.');
+            console.warn('Sync Beats: Supabase URL/key not set — realtime sync, database storage, and storage uploads are disabled. See the config comment above.');
         }
 
         // -------------------------------------------------------------
+        // LOCALIZATION (EN / KO / JA)
+        // -------------------------------------------------------------
+        const LANG_KEY = 'syncbeats_lang';
+
+        const TRANSLATIONS = {
+            en: {
+                nick_subtitle: "What should we call you?",
+                nick_label: "Your Nickname",
+                nick_placeholder: "e.g. Jamie",
+                nick_error: "Please enter a nickname (2-20 characters).",
+                continue_btn: "Continue",
+                room_subtitle: "Listen together in real-time",
+                playing_as: "Playing as",
+                change: "change",
+                lobby_name_label: "Lobby Name",
+                optional: "(optional)",
+                lobby_name_placeholder: "e.g. Friday Night Vibes",
+                lobby_password_label: "Room Password",
+                lobby_password_placeholder: "Leave blank for no password",
+                create_room_btn: "Create New Room",
+                recent_lobbies: "Your Recent Lobbies",
+                or_join_existing: "or join existing",
+                room_code_label: "Enter 6-Digit Room Code",
+                join_btn: "Join",
+                room_error: "Please enter a valid room code.",
+                rejoin_btn: "Rejoin",
+                host_tag: "Host",
+                guest_tag: "Guest",
+                track_count: "{n} track(s)",
+                join_overlay_title: "Join Sync Session",
+                join_overlay_desc: "Click below to enable synchronized audio playback in your browser.",
+                enter_room_btn: "Enter Room & Start Audio",
+                rename_lobby_title: "Rename Lobby",
+                set_password_title: "Set Room Password",
+                leave_room_title: "Return to Lobby Select",
+                connecting: "Connecting...",
+                host_badge: "Host",
+                guest_badge: "Guest (Listening)",
+                save_btn: "Save",
+                code_label: "Code:",
+                copy_btn: "Copy",
+                no_track: "No Track Selected",
+                waiting_playback: "Waiting for playback...",
+                playing_sync: "Playing in sync",
+                paused: "Paused",
+                upload_label: "Upload Local MP3 / Audio Files",
+                choose_files: "Choose MP3 file(s)...",
+                files_selected: "{n} files selected",
+                multi_select_hint: "You can select multiple files at once",
+                uploading: "Uploading to lobby storage...",
+                uploading_progress: "Uploading {i} of {n}: {name}",
+                add_url_label: "Or Add Direct Audio Stream URL(s)",
+                one_per_line: "(one per line)",
+                add_btn: "Add",
+                queue_tab: "Queue",
+                users_tab: "Users",
+                queue_empty: "Queue is empty",
+                no_one_here: "No one here yet",
+                uploaded_tag: "Uploaded",
+                make_host_btn: "Make Host",
+                listener_label: "Listener",
+                you_suffix: "(You)",
+                remove_track_title: "Remove from queue",
+                drag_title: "Drag to reorder",
+                shuffle_title: "Shuffle",
+                loop_title: "Repeat",
+                volume_title: "Your volume (only affects your device)",
+                show_password_title: "Show password",
+                hide_password_title: "Hide password",
+                password_modal_title_join: "Password Required",
+                password_modal_desc_join: "This room is password protected. Enter the password to join.",
+                password_modal_title_set: "Set Room Password",
+                password_modal_desc_set: "Add a password to keep your lobby private, or leave the field blank and submit to remove it.",
+                password_placeholder: "Enter password",
+                password_error: "Incorrect password.",
+                submit_btn: "Submit",
+                cancel_btn: "Cancel",
+                remove_password_btn: "Remove Password",
+                room_not_found: "Room not found. Check the code and try again.",
+                room_load_error: "Could not reach the server. Please try again.",
+            },
+            ko: {
+                nick_subtitle: "닉네임을 알려주세요",
+                nick_label: "닉네임",
+                nick_placeholder: "예: 지민",
+                nick_error: "닉네임을 입력해주세요 (2-20자).",
+                continue_btn: "계속하기",
+                room_subtitle: "실시간으로 함께 음악을 들어보세요",
+                playing_as: "현재 닉네임:",
+                change: "변경",
+                lobby_name_label: "로비 이름",
+                optional: "(선택 사항)",
+                lobby_name_placeholder: "예: 불금 파티",
+                lobby_password_label: "방 비밀번호",
+                lobby_password_placeholder: "비워두면 비밀번호 없음",
+                create_room_btn: "새 방 만들기",
+                recent_lobbies: "최근 방 목록",
+                or_join_existing: "또는 기존 방 참여하기",
+                room_code_label: "6자리 방 코드 입력",
+                join_btn: "참여하기",
+                room_error: "올바른 방 코드를 입력해주세요.",
+                rejoin_btn: "재입장",
+                host_tag: "호스트",
+                guest_tag: "게스트",
+                track_count: "{n}곡",
+                join_overlay_title: "세션 참여하기",
+                join_overlay_desc: "아래 버튼을 눌러 브라우저에서 동기화된 오디오 재생을 활성화하세요.",
+                enter_room_btn: "입장하고 오디오 시작",
+                rename_lobby_title: "로비 이름 변경",
+                set_password_title: "방 비밀번호 설정",
+                leave_room_title: "로비 목록으로 돌아가기",
+                connecting: "연결 중...",
+                host_badge: "호스트",
+                guest_badge: "게스트 (청취 중)",
+                save_btn: "저장",
+                code_label: "코드:",
+                copy_btn: "복사",
+                no_track: "선택된 트랙 없음",
+                waiting_playback: "재생 대기 중...",
+                playing_sync: "동기화되어 재생 중",
+                paused: "일시정지됨",
+                upload_label: "로컬 MP3 / 오디오 파일 업로드",
+                choose_files: "MP3 파일 선택...",
+                files_selected: "{n}개 파일 선택됨",
+                multi_select_hint: "여러 파일을 한 번에 선택할 수 있습니다",
+                uploading: "로비 저장소에 업로드 중...",
+                uploading_progress: "업로드 중 {i}/{n}: {name}",
+                add_url_label: "또는 오디오 스트림 URL 추가",
+                one_per_line: "(한 줄에 하나씩)",
+                add_btn: "추가",
+                queue_tab: "대기열",
+                users_tab: "참여자",
+                queue_empty: "대기열이 비어 있습니다",
+                no_one_here: "아직 아무도 없습니다",
+                uploaded_tag: "업로드됨",
+                make_host_btn: "호스트로 지정",
+                listener_label: "청취자",
+                you_suffix: "(나)",
+                remove_track_title: "대기열에서 삭제",
+                drag_title: "드래그하여 순서 변경",
+                shuffle_title: "셔플",
+                loop_title: "반복",
+                volume_title: "내 볼륨 (내 기기에만 적용됨)",
+                show_password_title: "비밀번호 표시",
+                hide_password_title: "비밀번호 숨기기",
+                password_modal_title_join: "비밀번호 필요",
+                password_modal_desc_join: "이 방은 비밀번호로 보호되어 있습니다. 참여하려면 비밀번호를 입력하세요.",
+                password_modal_title_set: "방 비밀번호 설정",
+                password_modal_desc_set: "로비를 비공개로 유지하려면 비밀번호를 추가하세요. 필드를 비워두고 제출하면 비밀번호가 제거됩니다.",
+                password_placeholder: "비밀번호 입력",
+                password_error: "비밀번호가 올바르지 않습니다.",
+                submit_btn: "제출",
+                cancel_btn: "취소",
+                remove_password_btn: "비밀번호 제거",
+                room_not_found: "방을 찾을 수 없습니다. 코드를 확인 후 다시 시도해주세요.",
+                room_load_error: "서버에 연결할 수 없습니다. 다시 시도해주세요.",
+            },
+            ja: {
+                nick_subtitle: "ニックネームを教えてください",
+                nick_label: "ニックネーム",
+                nick_placeholder: "例: ゆうき",
+                nick_error: "ニックネームを入力してください（2〜20文字）。",
+                continue_btn: "続ける",
+                room_subtitle: "リアルタイムで一緒に音楽を聴こう",
+                playing_as: "現在のニックネーム:",
+                change: "変更",
+                lobby_name_label: "ロビー名",
+                optional: "(任意)",
+                lobby_name_placeholder: "例: 金曜の夜",
+                lobby_password_label: "ルームパスワード",
+                lobby_password_placeholder: "空欄でパスワードなし",
+                create_room_btn: "新しいルームを作成",
+                recent_lobbies: "最近のロビー",
+                or_join_existing: "既存のルームに参加",
+                room_code_label: "6桁のルームコードを入力",
+                join_btn: "参加する",
+                room_error: "有効なルームコードを入力してください。",
+                rejoin_btn: "再入室",
+                host_tag: "ホスト",
+                guest_tag: "ゲスト",
+                track_count: "{n}曲",
+                join_overlay_title: "セッションに参加",
+                join_overlay_desc: "下のボタンを押して、ブラウザで同期オーディオ再生を有効にしてください。",
+                enter_room_btn: "入室してオーディオを開始",
+                rename_lobby_title: "ロビー名を変更",
+                set_password_title: "ルームパスワードを設定",
+                leave_room_title: "ロビー選択に戻る",
+                connecting: "接続中...",
+                host_badge: "ホスト",
+                guest_badge: "ゲスト（視聴中）",
+                save_btn: "保存",
+                code_label: "コード:",
+                copy_btn: "コピー",
+                no_track: "トラックが選択されていません",
+                waiting_playback: "再生を待っています...",
+                playing_sync: "同期して再生中",
+                paused: "一時停止中",
+                upload_label: "ローカルMP3 / 音声ファイルをアップロード",
+                choose_files: "MP3ファイルを選択...",
+                files_selected: "{n}個のファイルを選択",
+                multi_select_hint: "複数のファイルを一度に選択できます",
+                uploading: "ロビーのストレージにアップロード中...",
+                uploading_progress: "アップロード中 {i}/{n}: {name}",
+                add_url_label: "または音声ストリームURLを追加",
+                one_per_line: "(1行に1つ)",
+                add_btn: "追加",
+                queue_tab: "キュー",
+                users_tab: "参加者",
+                queue_empty: "キューは空です",
+                no_one_here: "まだ誰もいません",
+                uploaded_tag: "アップロード済み",
+                make_host_btn: "ホストにする",
+                listener_label: "リスナー",
+                you_suffix: "（あなた）",
+                remove_track_title: "キューから削除",
+                drag_title: "ドラッグして並び替え",
+                shuffle_title: "シャッフル",
+                loop_title: "リピート",
+                volume_title: "自分の音量（この端末のみに反映）",
+                show_password_title: "パスワードを表示",
+                hide_password_title: "パスワードを隠す",
+                password_modal_title_join: "パスワードが必要です",
+                password_modal_desc_join: "このルームはパスワードで保護されています。参加するにはパスワードを入力してください。",
+                password_modal_title_set: "ルームパスワードを設定",
+                password_modal_desc_set: "ロビーを非公開にするにはパスワードを追加してください。空欄のまま送信すると削除されます。",
+                password_placeholder: "パスワードを入力",
+                password_error: "パスワードが正しくありません。",
+                submit_btn: "送信",
+                cancel_btn: "キャンセル",
+                remove_password_btn: "パスワードを削除",
+                room_not_found: "ルームが見つかりません。コードを確認してもう一度お試しください。",
+                room_load_error: "サーバーに接続できませんでした。もう一度お試しください。",
+            }
+        };
+
+        let currentLang = localStorage.getItem(LANG_KEY) || (navigator.language || 'en').slice(0, 2);
+        if (!TRANSLATIONS[currentLang]) currentLang = 'en';
+
+        function t(key, vars) {
+            let str = (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS.en[key] || key;
+            if (vars) {
+                Object.keys(vars).forEach(k => {
+                    str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]);
+                });
+            }
+            return str;
+        }
+
+        function applyTranslations() {
+            document.documentElement.lang = currentLang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                el.textContent = t(el.getAttribute('data-i18n'));
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+            });
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
+            });
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const isActive = btn.getAttribute('data-lang') === currentLang;
+                btn.classList.toggle('bg-[#1DB954]', isActive);
+                btn.classList.toggle('text-black', isActive);
+                btn.classList.toggle('text-[#A7A7A7]', !isActive);
+            });
+
+            // Re-render any dynamic, JS-generated text
+            updatePlayerDisplay();
+            renderPlaylist();
+            renderSavedLobbiesList();
+            if (roomChannel) renderParticipants(roomChannel.presenceState());
+            if (roomId) updateRoleUI();
+        }
+
+        function setLanguage(lang) {
+            if (!TRANSLATIONS[lang]) return;
+            currentLang = lang;
+            localStorage.setItem(LANG_KEY, lang);
+            applyTranslations();
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
+        });
+
+        // -------------------------------------------------------------
         // IDENTITY: NICKNAME & CLIENT ID
+        // (Kept in localStorage intentionally — this is local device
+        // identity, not lobby/session data, which now lives in Supabase.)
         // -------------------------------------------------------------
         const NICKNAME_KEY = 'syncbeats_nickname';
         const CLIENT_ID_KEY = 'syncbeats_client_id';
@@ -474,17 +982,26 @@
         let roomId = null;
         let roomChannel = null;
         let lobbyName = '';
+        let roomPassword = null; // null/'' = no password
         let joinedAt = null;
 
         let playlist = [];
         let currentTrackIndex = -1;
         let isPlaying = false;
         let isSeeking = false;
+        let loopMode = 'off'; // 'off' | 'all' | 'one'
+        let shuffleEnabled = false;
+        let shuffleHistory = [];
 
         const audioPlayer = document.getElementById('audio-player');
         const seekSlider = document.getElementById('seek-slider');
         const currentTimeEl = document.getElementById('current-time');
         const totalDurationEl = document.getElementById('total-duration');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValueEl = document.getElementById('volume-value');
+        const volumeBtn = document.getElementById('volume-btn');
+        const volumeIconHigh = document.getElementById('volume-icon-high');
+        const volumeIconMuted = document.getElementById('volume-icon-muted');
 
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return '00:00';
@@ -494,50 +1011,90 @@
         }
 
         // -------------------------------------------------------------
-        // PERSISTENT ROLE & LOBBY STORAGE
+        // PASSWORD VISIBILITY TOGGLE (shared by both password fields)
         // -------------------------------------------------------------
-        const SAVED_LOBBIES_KEY = 'syncbeats_saved_lobbies';
-        const ROOM_ROLES_KEY = 'syncbeats_room_roles';
+        function setupPasswordToggle(inputId, btnId) {
+            const input = document.getElementById(inputId);
+            const btn = document.getElementById(btnId);
+            if (!input || !btn) return;
 
-        function saveRoomRole(code, role) {
-            try {
-                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
-                roles[code] = role;
-                localStorage.setItem(ROOM_ROLES_KEY, JSON.stringify(roles));
-            } catch (e) {
-                console.error("Could not save room role", e);
+            const showIcon = btn.querySelector('.eye-icon-show');
+            const hideIcon = btn.querySelector('.eye-icon-hide');
+
+            btn.addEventListener('click', () => {
+                const isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                showIcon.classList.toggle('hidden', isHidden);
+                hideIcon.classList.toggle('hidden', !isHidden);
+                btn.title = isHidden ? t('hide_password_title') : t('show_password_title');
+                // Keep focus + caret in the field after toggling.
+                input.focus();
+                const len = input.value.length;
+                input.setSelectionRange?.(len, len);
+            });
+        }
+
+        setupPasswordToggle('lobby-password-input', 'lobby-password-toggle-btn');
+        setupPasswordToggle('password-modal-input', 'password-modal-toggle-btn');
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.innerText = str;
+            return div.innerHTML;
+        }
+
+        // -------------------------------------------------------------
+        // VOLUME (PER-DEVICE, LOCAL ONLY)
+        // Intentionally never written to Supabase or sent over the
+        // realtime channel — host and guests each control only their
+        // own playback volume, independent of the shared sync state.
+        // -------------------------------------------------------------
+        const VOLUME_KEY = 'syncbeats_volume';
+        let lastNonZeroVolume = 100;
+
+        function loadInitialVolume() {
+            const stored = parseInt(localStorage.getItem(VOLUME_KEY), 10);
+            const initial = (!isNaN(stored) && stored >= 0 && stored <= 100) ? stored : 100;
+            applyVolume(initial, { persist: false, updateSlider: true });
+            if (initial > 0) lastNonZeroVolume = initial;
+        }
+
+        function applyVolume(value, { persist = true, updateSlider = false } = {}) {
+            const clamped = Math.max(0, Math.min(100, value));
+            audioPlayer.volume = clamped / 100;
+
+            if (volumeSlider && updateSlider) volumeSlider.value = String(clamped);
+            if (volumeValueEl) volumeValueEl.innerText = String(clamped);
+
+            if (volumeIconHigh && volumeIconMuted) {
+                volumeIconHigh.classList.toggle('hidden', clamped === 0);
+                volumeIconMuted.classList.toggle('hidden', clamped !== 0);
+            }
+
+            if (persist) localStorage.setItem(VOLUME_KEY, String(clamped));
+            if (clamped > 0) lastNonZeroVolume = clamped;
+        }
+
+        function toggleMute() {
+            const current = parseInt(volumeSlider?.value, 10) || 0;
+            if (current > 0) {
+                applyVolume(0, { updateSlider: true });
+            } else {
+                applyVolume(lastNonZeroVolume || 100, { updateSlider: true });
             }
         }
 
-        function getRoomRole(code) {
-            try {
-                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
-                if (roles[code]) return roles[code];
+        volumeSlider?.addEventListener('input', (e) => {
+            applyVolume(parseInt(e.target.value, 10) || 0);
+        });
+        volumeBtn?.addEventListener('click', toggleMute);
 
-                const lobbies = getSavedLobbies();
-                if (lobbies[code] && lobbies[code].role) {
-                    return lobbies[code].role;
-                }
-                return null;
-            } catch {
-                return null;
-            }
-        }
-
-        function getSavedLobbies() {
-            try {
-                return JSON.parse(localStorage.getItem(SAVED_LOBBIES_KEY) || '{}');
-            } catch {
-                return {};
-            }
-        }
-
-        function saveCurrentLobbyState() {
-            if (!roomId) return;
-
-            const lobbies = getSavedLobbies();
-
-            const serializablePlaylist = playlist.map(track => ({
+        // -------------------------------------------------------------
+        // SUPABASE-BACKED LOBBY STORAGE
+        // (Replaces the old localStorage-based saved lobbies / room state)
+        // -------------------------------------------------------------
+        function serializablePlaylist() {
+            return playlist.map(track => ({
                 id: track.id,
                 title: track.title,
                 url: track.url,
@@ -545,51 +1102,133 @@
                 isLocal: track.isLocal,
                 duration: track.duration || null
             }));
+        }
 
-            lobbies[roomId] = {
-                roomId,
-                lobbyName: lobbyName || '',
-                role: isHost ? 'host' : 'guest',
-                updatedAt: Date.now(),
-                currentTrackIndex,
-                currentTime: audioPlayer.currentTime || 0,
-                playlist: serializablePlaylist
-            };
+        async function fetchLobbyFromDB(code) {
+            if (!supabaseClient) return null;
+            const { data, error } = await supabaseClient
+                .from(LOBBIES_TABLE)
+                .select('*')
+                .eq('room_id', code)
+                .maybeSingle();
 
-            localStorage.setItem(SAVED_LOBBIES_KEY, JSON.stringify(lobbies));
-            saveRoomRole(roomId, isHost ? 'host' : 'guest');
+            if (error) {
+                console.error('Could not fetch lobby from database:', error.message);
+                return { error };
+            }
+            return { data };
+        }
+
+        async function createLobbyInDB() {
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient.from(LOBBIES_TABLE).insert({
+                room_id: roomId,
+                lobby_name: lobbyName || '',
+                host_client_id: clientId,
+                password: roomPassword || null,
+                playlist: serializablePlaylist(),
+                current_track_index: currentTrackIndex,
+                current_time: 0,
+                is_playing: false,
+                loop_mode: loopMode,
+                shuffle: shuffleEnabled,
+                updated_at: new Date().toISOString()
+            });
+            if (error) console.error('Could not create lobby in database:', error.message);
+        }
+
+        // Host-only: persists the full playback/queue state to the database.
+        async function saveLobbyStateToDB() {
+            if (!supabaseClient || !roomId || !isHost) return;
+
+            const { error } = await supabaseClient
+                .from(LOBBIES_TABLE)
+                .update({
+                    lobby_name: lobbyName || '',
+                    playlist: serializablePlaylist(),
+                    current_track_index: currentTrackIndex,
+                    current_time: audioPlayer.currentTime || 0,
+                    is_playing: isPlaying,
+                    loop_mode: loopMode,
+                    shuffle: shuffleEnabled,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('room_id', roomId);
+
+            if (error) console.error('Could not save lobby state to database:', error.message);
 
             const saveBtn = document.getElementById('save-lobby-btn');
             if (saveBtn) {
                 saveBtn.classList.add('bg-blue-500', 'text-white');
                 setTimeout(() => saveBtn.classList.remove('bg-blue-500', 'text-white'), 1000);
             }
-
-            renderSavedLobbiesList();
         }
 
-        function renderSavedLobbiesList() {
+        // Anyone: keeps a lightweight per-client snapshot in lobby_members
+        // so the "Recent Lobbies" list can be reconstructed purely from the DB.
+        async function saveMembershipSnapshot() {
+            if (!supabaseClient || !roomId) return;
+
+            const { error } = await supabaseClient
+                .from(MEMBERS_TABLE)
+                .upsert({
+                    room_id: roomId,
+                    client_id: clientId,
+                    nickname,
+                    role: isHost ? 'host' : 'guest',
+                    lobby_name: lobbyName || '',
+                    track_count: playlist.length,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'room_id,client_id' });
+
+            if (error) console.error('Could not save membership snapshot:', error.message);
+        }
+
+        async function fetchMyMemberships() {
+            if (!supabaseClient) return [];
+            const { data, error } = await supabaseClient
+                .from(MEMBERS_TABLE)
+                .select('*')
+                .eq('client_id', clientId)
+                .order('updated_at', { ascending: false })
+                .limit(15);
+
+            if (error) {
+                console.error('Could not fetch saved lobbies:', error.message);
+                return [];
+            }
+            return data || [];
+        }
+
+        async function deleteMembershipRow(code) {
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient
+                .from(MEMBERS_TABLE)
+                .delete()
+                .eq('room_id', code)
+                .eq('client_id', clientId);
+            if (error) console.error('Could not remove saved lobby entry:', error.message);
+        }
+
+        async function renderSavedLobbiesList() {
             const listEl = document.getElementById('saved-lobbies-list');
             const containerEl = document.getElementById('saved-lobbies-section');
             const countEl = document.getElementById('saved-lobbies-count');
 
-            const lobbies = getSavedLobbies();
-            const keys = Object.keys(lobbies);
+            const memberships = await fetchMyMemberships();
 
-            countEl.innerText = keys.length;
+            countEl.innerText = memberships.length;
 
-            if (keys.length === 0) {
+            if (memberships.length === 0) {
                 containerEl.classList.add('hidden');
                 return;
             }
 
             containerEl.classList.remove('hidden');
-            listEl.innerHTML = keys.map(code => {
-                const item = lobbies[code];
-                const trackCount = item.playlist ? item.playlist.length : 0;
-                const role = getRoomRole(code) || item.role || 'guest';
-                const isHostRole = role === 'host';
-                const displayName = item.lobbyName ? escapeHtml(item.lobbyName) : `Room ${code}`;
+            listEl.innerHTML = memberships.map(item => {
+                const isHostRole = item.role === 'host';
+                const displayName = item.lobby_name ? escapeHtml(item.lobby_name) : `Room ${item.room_id}`;
+                const trackCount = item.track_count || 0;
 
                 return `
           <div class="flex items-center justify-between p-2.5 bg-[#000000]/70 border border-[#282828] rounded-xl text-xs">
@@ -597,19 +1236,19 @@
               <div class="min-w-0">
                 <p class="truncate font-semibold text-[#D1D1D1]">${displayName}</p>
                 <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="font-mono text-[10px] text-[#1ED760]">${code}</span>
+                  <span class="font-mono text-[10px] text-[#1ED760]">${escapeHtml(item.room_id)}</span>
                   <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${isHostRole ? 'bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}">
-                    ${isHostRole ? 'Host' : 'Guest'}
+                    ${isHostRole ? t('host_tag') : t('guest_tag')}
                   </span>
-                  <span class="text-[10px] text-[#727272]">(${trackCount} track${trackCount === 1 ? '' : 's'})</span>
+                  <span class="text-[10px] text-[#727272]">(${t('track_count', { n: trackCount })})</span>
                 </div>
               </div>
             </div>
             <div class="flex items-center gap-1.5 flex-shrink-0">
-              <button data-rejoin="${code}" class="rejoin-btn bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-[11px] font-bold px-2.5 py-1 rounded-full transition-all">
-                Rejoin
+              <button data-rejoin="${escapeHtml(item.room_id)}" class="rejoin-btn bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-[11px] font-bold px-2.5 py-1 rounded-full transition-all">
+                ${t('rejoin_btn')}
               </button>
-              <button data-delete="${code}" class="delete-lobby-btn text-[#727272] hover:text-red-400 p-1 rounded-lg">
+              <button data-delete="${escapeHtml(item.room_id)}" class="delete-lobby-btn text-[#727272] hover:text-red-400 p-1 rounded-lg">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               </button>
             </div>
@@ -620,93 +1259,26 @@
             listEl.querySelectorAll('.rejoin-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const code = e.currentTarget.getAttribute('data-rejoin');
-                    rejoinSavedLobby(code);
+                    document.getElementById('room-code-input').value = code;
+                    joinRoomWithCode(code);
                 });
             });
 
             listEl.querySelectorAll('.delete-lobby-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     const code = e.currentTarget.getAttribute('data-delete');
-                    deleteSavedLobby(code);
+                    await deleteMembershipRow(code);
+                    renderSavedLobbiesList();
                 });
             });
-        }
-
-        function rejoinSavedLobby(code) {
-            const savedRole = getRoomRole(code);
-            roomId = code;
-
-            if (savedRole === 'host') {
-                isHost = true;
-                saveRoomRole(code, 'host');
-            } else {
-                isHost = false;
-                saveRoomRole(code, 'guest');
-            }
-
-            window.history.replaceState({}, '', `?room=${roomId}`);
-
-            const lobbies = getSavedLobbies();
-            const savedState = lobbies[code];
-            if (savedState) {
-                playlist = savedState.playlist || [];
-                currentTrackIndex = savedState.currentTrackIndex ?? -1;
-                lobbyName = savedState.lobbyName || '';
-            }
-
-            startRoomSession();
-
-            if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
-                loadTrack(currentTrackIndex);
-            } else {
-                renderPlaylist();
-            }
-        }
-
-        // -------------------------------------------------------------
-        // DELETE LOBBY & CLEANUP SUPABASE SUBFOLDER
-        // -------------------------------------------------------------
-        async function deleteSavedLobby(code) {
-            if (supabaseClient) {
-                try {
-                    const folderPath = `lobbies/${code}`;
-
-                    // List all files in the lobby subfolder
-                    const { data: fileList } = await supabaseClient.storage
-                        .from(BUCKET_NAME)
-                        .list(folderPath, { limit: 100 });
-
-                    // If files exist in storage subfolder, remove them
-                    if (fileList && fileList.length > 0) {
-                        const filesToDelete = fileList.map((file) => `${folderPath}/${file.name}`);
-                        await supabaseClient.storage
-                            .from(BUCKET_NAME)
-                            .remove(filesToDelete);
-                    }
-                } catch (err) {
-                    console.error(`Could not clean up storage folder for lobby ${code}:`, err);
-                }
-            }
-
-            const lobbies = getSavedLobbies();
-            delete lobbies[code];
-            localStorage.setItem(SAVED_LOBBIES_KEY, JSON.stringify(lobbies));
-
-            try {
-                const roles = JSON.parse(localStorage.getItem(ROOM_ROLES_KEY) || '{}');
-                delete roles[code];
-                localStorage.setItem(ROOM_ROLES_KEY, JSON.stringify(roles));
-            } catch (e) { }
-
-            renderSavedLobbiesList();
         }
 
         // -------------------------------------------------------------
         // LEAVE ROOM / RETURN HOME
         // -------------------------------------------------------------
-        function returnToHomeScreen() {
+        async function returnToHomeScreen() {
             if (roomId) {
-                saveCurrentLobbyState();
+                await saveMembershipSnapshot();
             }
 
             audioPlayer.pause();
@@ -722,8 +1294,11 @@
             isHost = false;
             joinedAt = null;
             lobbyName = '';
+            roomPassword = null;
             playlist = [];
             currentTrackIndex = -1;
+            loopMode = 'off';
+            shuffleEnabled = false;
 
             window.history.replaceState({}, '', window.location.pathname);
 
@@ -746,6 +1321,8 @@
         // INITIALIZATION & ROOM MANAGEMENT
         // -------------------------------------------------------------
         window.addEventListener('DOMContentLoaded', () => {
+            applyTranslations();
+            loadInitialVolume();
             renderSavedLobbiesList();
             setActiveTab('queue');
 
@@ -808,7 +1385,10 @@
             handlePendingRoomFromUrl();
         }
 
-        function createRoomServer() {
+        // -------------------------------------------------------------
+        // CREATE / JOIN ROOM (Supabase-backed)
+        // -------------------------------------------------------------
+        async function createRoomServer() {
             roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
             isHost = true;
 
@@ -817,58 +1397,90 @@
             lobbyName = typedName || `${nickname}'s Lobby`;
             if (nameInput) nameInput.value = '';
 
-            saveRoomRole(roomId, 'host');
+            const passwordInput = document.getElementById('lobby-password-input');
+            roomPassword = (passwordInput?.value || '').trim() || null;
+            if (passwordInput) passwordInput.value = '';
+
+            playlist = [];
+            currentTrackIndex = -1;
+            loopMode = 'off';
+            shuffleEnabled = false;
+
             window.history.replaceState({}, '', `?room=${roomId}`);
 
-            saveCurrentLobbyState();
+            await createLobbyInDB();
+            await saveMembershipSnapshot();
+
             startRoomSession();
         }
 
-        function joinRoomWithCode(overrideCode = null) {
+        async function joinRoomWithCode(overrideCode = null) {
             const inputEl = document.getElementById('room-code-input');
             const errorEl = document.getElementById('room-error-msg');
             const code = (overrideCode || inputEl.value).trim().toUpperCase();
 
             if (!code || code.length < 4) {
+                errorEl.textContent = t('room_error');
                 errorEl.classList.remove('hidden');
                 return;
             }
 
             errorEl.classList.add('hidden');
+
+            const result = await fetchLobbyFromDB(code);
+
+            if (!result || result.error) {
+                errorEl.textContent = t('room_load_error');
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!result.data) {
+                errorEl.textContent = t('room_not_found');
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const lobbyRow = result.data;
             roomId = code;
+            isHost = lobbyRow.host_client_id === clientId;
 
-            const persistentRole = getRoomRole(code);
+            const proceedWithJoin = async () => {
+                lobbyName = lobbyRow.lobby_name || '';
+                roomPassword = lobbyRow.password || null;
+                playlist = lobbyRow.playlist || [];
+                currentTrackIndex = (typeof lobbyRow.current_track_index === 'number') ? lobbyRow.current_track_index : -1;
+                loopMode = lobbyRow.loop_mode || 'off';
+                shuffleEnabled = !!lobbyRow.shuffle;
 
-            if (persistentRole === 'host') {
-                isHost = true;
-                saveRoomRole(code, 'host');
+                window.history.replaceState({}, '', `?room=${roomId}`);
+
+                await saveMembershipSnapshot();
+
+                startRoomSession();
+
+                if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
+                    audioPlayer.src = playlist[currentTrackIndex].url;
+                    if (typeof lobbyRow.current_time === 'number') {
+                        audioPlayer.currentTime = lobbyRow.current_time;
+                    }
+                    renderPlaylist();
+                    updatePlayerDisplay();
+                } else {
+                    renderPlaylist();
+                }
+            };
+
+            // Host never needs a password to their own room.
+            if (roomPassword_needsPrompt(lobbyRow)) {
+                openPasswordModal('join', proceedWithJoin);
             } else {
-                isHost = false;
-                saveRoomRole(code, 'guest');
+                proceedWithJoin();
             }
+        }
 
-            window.history.replaceState({}, '', `?room=${roomId}`);
-
-            const lobbies = getSavedLobbies();
-            if (lobbies[roomId]) {
-                playlist = lobbies[roomId].playlist || [];
-                currentTrackIndex = lobbies[roomId].currentTrackIndex ?? -1;
-                lobbyName = lobbies[roomId].lobbyName || '';
-            } else {
-                playlist = [];
-                currentTrackIndex = -1;
-                lobbyName = '';
-            }
-
-            startRoomSession();
-
-            // Repaint the queue/player UI from the locally cached lobby state
-            // right away, instead of waiting on the realtime sync round-trip.
-            if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
-                loadTrack(currentTrackIndex);
-            } else {
-                renderPlaylist();
-            }
+        function roomPassword_needsPrompt(lobbyRow) {
+            return !!lobbyRow.password && lobbyRow.host_client_id !== clientId;
         }
 
         function startRoomSession() {
@@ -879,6 +1491,7 @@
 
             updateRoleUI();
             updateLobbyNameUI();
+            updateLoopShuffleUI();
             initializeRealtime();
 
             document.getElementById('join-overlay').classList.remove('hidden');
@@ -893,13 +1506,15 @@
             const badge = document.getElementById('role-badge');
             const saveBtn = document.getElementById('save-lobby-btn');
             const editNameBtn = document.getElementById('edit-lobby-name-btn');
+            const setPasswordBtn = document.getElementById('set-password-btn');
             const controls = document.querySelectorAll('#host-controls button, #host-controls input, #host-controls label');
 
             if (isHost) {
-                badge.innerText = 'Host';
+                badge.innerText = t('host_badge');
                 badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30';
                 saveBtn.classList.remove('hidden');
                 editNameBtn?.classList.remove('hidden');
+                setPasswordBtn?.classList.remove('hidden');
                 controls.forEach(el => {
                     if (el.tagName === 'LABEL') {
                         el.classList.remove('pointer-events-none', 'opacity-50');
@@ -908,10 +1523,11 @@
                     }
                 });
             } else {
-                badge.innerText = 'Guest (Listening)';
+                badge.innerText = t('guest_badge');
                 badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30';
                 saveBtn.classList.add('hidden');
                 editNameBtn?.classList.add('hidden');
+                setPasswordBtn?.classList.add('hidden');
                 controls.forEach(el => {
                     if (el.tagName === 'LABEL') {
                         el.classList.add('pointer-events-none', 'opacity-50');
@@ -920,6 +1536,14 @@
                     }
                 });
             }
+
+            updatePasswordLockIcon();
+        }
+
+        function updatePasswordLockIcon() {
+            const icon = document.getElementById('password-lock-icon');
+            if (!icon) return;
+            icon.classList.toggle('text-[#1ED760]', !!roomPassword);
         }
 
         // -------------------------------------------------------------
@@ -959,7 +1583,7 @@
             display.classList.remove('hidden');
             updateLobbyNameUI();
 
-            saveCurrentLobbyState();
+            saveMembershipSnapshot();
             broadcastState();
         }
 
@@ -976,6 +1600,86 @@
             const shareUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
             navigator.clipboard.writeText(shareUrl);
             alert(`Room Link Copied!\n\nRoom Code: ${roomId}\nURL: ${shareUrl}`);
+        }
+
+        // -------------------------------------------------------------
+        // PASSWORD MODAL (join-locked-room + host set/remove password)
+        // -------------------------------------------------------------
+        let passwordModalMode = 'join'; // 'join' | 'set'
+        let passwordModalOnSuccess = null;
+
+        function openPasswordModal(mode, onSuccess) {
+            passwordModalMode = mode;
+            passwordModalOnSuccess = onSuccess || null;
+
+            const titleEl = document.getElementById('password-modal-title');
+            const descEl = document.getElementById('password-modal-desc');
+            const input = document.getElementById('password-modal-input');
+            const errorEl = document.getElementById('password-modal-error');
+            const removeBtn = document.getElementById('password-modal-remove-btn');
+
+            input.value = '';
+            input.type = 'password';
+            const toggleBtn = document.getElementById('password-modal-toggle-btn');
+            if (toggleBtn) {
+                toggleBtn.querySelector('.eye-icon-show')?.classList.remove('hidden');
+                toggleBtn.querySelector('.eye-icon-hide')?.classList.add('hidden');
+                toggleBtn.title = t('show_password_title');
+            }
+            errorEl.classList.add('hidden');
+
+            if (mode === 'set') {
+                titleEl.innerText = t('password_modal_title_set');
+                descEl.innerText = t('password_modal_desc_set');
+                removeBtn.classList.toggle('hidden', !roomPassword);
+            } else {
+                titleEl.innerText = t('password_modal_title_join');
+                descEl.innerText = t('password_modal_desc_join');
+                removeBtn.classList.add('hidden');
+            }
+
+            document.getElementById('password-modal').classList.remove('hidden');
+            input.focus();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.add('hidden');
+            passwordModalOnSuccess = null;
+        }
+
+        async function submitPasswordModal() {
+            const input = document.getElementById('password-modal-input');
+            const errorEl = document.getElementById('password-modal-error');
+            const val = input.value; // don't trim — passwords may be intentionally spaced
+
+            if (passwordModalMode === 'join') {
+                if (val !== roomPassword) {
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                errorEl.classList.add('hidden');
+                closePasswordModal();
+                if (passwordModalOnSuccess) passwordModalOnSuccess();
+            } else {
+                // Host setting/updating a password.
+                const newPassword = val.trim() || null;
+                roomPassword = newPassword;
+                updatePasswordLockIcon();
+
+                if (supabaseClient && roomId) {
+                    const { error } = await supabaseClient
+                        .from(LOBBIES_TABLE)
+                        .update({ password: newPassword, updated_at: new Date().toISOString() })
+                        .eq('room_id', roomId);
+                    if (error) console.error('Could not update room password:', error.message);
+                }
+                closePasswordModal();
+            }
+        }
+
+        function removePasswordFromModal() {
+            document.getElementById('password-modal-input').value = '';
+            submitPasswordModal();
         }
 
         // -------------------------------------------------------------
@@ -1035,7 +1739,7 @@
             if (entries.length === 0) {
                 container.innerHTML = `
           <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
-            No one here yet
+            ${t('no_one_here')}
           </li>
         `;
                 return;
@@ -1059,14 +1763,14 @@
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium truncate text-[#D1D1D1]">
                 ${escapeHtml(entry.nickname || 'Guest')}
-                ${isSelf ? '<span class="text-[#727272] font-normal">(You)</span>' : ''}
+                ${isSelf ? `<span class="text-[#727272] font-normal">${t('you_suffix')}</span>` : ''}
               </p>
-              <span class="text-[10px] font-medium ${entry.isHost ? 'text-[#1ED760]' : 'text-[#727272]'}">${entry.isHost ? 'Host' : 'Listener'}</span>
+              <span class="text-[10px] font-medium ${entry.isHost ? 'text-[#1ED760]' : 'text-[#727272]'}">${entry.isHost ? t('host_badge') : t('listener_label')}</span>
             </div>
 
             ${canTransfer ? `
               <button data-transfer="${entry.clientId}" class="transfer-host-btn flex-shrink-0 text-[10px] font-semibold text-[#4CD97B] hover:text-white bg-[#1DB954]/20 hover:bg-[#1DB954]/40 border border-[#1DB954]/30 px-2.5 py-1.5 rounded-lg transition-all active:scale-95">
-                Make Host
+                ${t('make_host_btn')}
               </button>
             ` : ''}
           </li>
@@ -1081,13 +1785,12 @@
             });
         }
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.innerText = str;
-            return div.innerHTML;
-        }
-
-        function transferHost(targetClientId) {
+        // Instantly flips control for every connected client: the realtime
+        // broadcast updates the two clients directly involved right away,
+        // presence re-tracking refreshes everyone else's participant list,
+        // and the database write makes the new host authoritative even if
+        // someone reloads the page a moment later.
+        async function transferHost(targetClientId) {
             if (!isHost || !roomChannel || !targetClientId || targetClientId === clientId) return;
 
             roomChannel.send({
@@ -1097,9 +1800,17 @@
             });
 
             isHost = false;
-            saveRoomRole(roomId, 'guest');
             updateRoleUI();
             roomChannel.track({ clientId, nickname, isHost, joinedAt });
+            saveMembershipSnapshot();
+
+            if (supabaseClient && roomId) {
+                const { error } = await supabaseClient
+                    .from(LOBBIES_TABLE)
+                    .update({ host_client_id: targetClientId, updated_at: new Date().toISOString() })
+                    .eq('room_id', roomId);
+                if (error) console.error('Could not persist host transfer:', error.message);
+            }
         }
 
         function handleHostTransfer(payload) {
@@ -1113,15 +1824,16 @@
                 return;
             }
 
-            saveRoomRole(roomId, isHost ? 'host' : 'guest');
             updateRoleUI();
             roomChannel?.track({ clientId, nickname, isHost, joinedAt });
+            saveMembershipSnapshot();
         }
 
         function broadcastState() {
             if (!roomChannel || !isHost) return;
 
-            saveCurrentLobbyState();
+            saveLobbyStateToDB();
+            saveMembershipSnapshot();
 
             roomChannel.send({
                 type: 'broadcast',
@@ -1131,6 +1843,8 @@
                     playlist,
                     currentTrackIndex,
                     isPlaying,
+                    loopMode,
+                    shuffleEnabled,
                     currentTime: audioPlayer.currentTime,
                     timestamp: Date.now()
                 }
@@ -1146,6 +1860,9 @@
             playlist = payload.playlist || [];
             currentTrackIndex = payload.currentTrackIndex;
             isPlaying = payload.isPlaying;
+            loopMode = payload.loopMode || 'off';
+            shuffleEnabled = !!payload.shuffleEnabled;
+            updateLoopShuffleUI();
 
             renderPlaylist();
 
@@ -1219,7 +1936,7 @@
 
             labelEl.innerText = files.length === 1
                 ? files[0].name
-                : `${files.length} files selected`;
+                : t('files_selected', { n: files.length });
 
             uploadStatusEl.classList.remove('hidden');
 
@@ -1227,8 +1944,8 @@
                 const file = files[i];
 
                 uploadStatusEl.innerText = files.length > 1
-                    ? `Uploading ${i + 1} of ${files.length}: ${file.name}`
-                    : 'Uploading to lobby storage...';
+                    ? t('uploading_progress', { i: i + 1, n: files.length, name: file.name })
+                    : t('uploading');
 
                 let audioUrl = URL.createObjectURL(file);
                 let filePath = null;
@@ -1282,8 +1999,7 @@
             }
 
             uploadStatusEl.classList.add('hidden');
-            uploadStatusEl.innerText = 'Uploading to lobby storage...';
-            labelEl.innerText = 'Choose MP3 file(s)...';
+            labelEl.innerText = t('choose_files');
             event.target.value = '';
 
             broadcastState();
@@ -1334,6 +2050,7 @@
             if (index < 0 || index >= playlist.length) return;
 
             currentTrackIndex = index;
+            shuffleHistory.push(index);
             const track = playlist[index];
 
             if (track.url) {
@@ -1365,24 +2082,101 @@
             broadcastState();
         }
 
+        function pickRandomIndex(excludeIndex) {
+            if (playlist.length === 0) return -1;
+            if (playlist.length === 1) return 0;
+
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * playlist.length);
+            } while (idx === excludeIndex);
+            return idx;
+        }
+
         function playNextTrack() {
-            if (!isHost) return;
-            if (currentTrackIndex + 1 < playlist.length) {
+            if (!isHost || playlist.length === 0) return;
+
+            if (shuffleEnabled) {
+                loadTrack(pickRandomIndex(currentTrackIndex));
+            } else if (currentTrackIndex + 1 < playlist.length) {
                 loadTrack(currentTrackIndex + 1);
+            } else if (loopMode === 'all') {
+                loadTrack(0);
             }
         }
 
         function playPreviousTrack() {
-            if (!isHost) return;
+            if (!isHost || playlist.length === 0) return;
+
+            if (shuffleEnabled && shuffleHistory.length > 1) {
+                shuffleHistory.pop(); // discard current
+                const prevIdx = shuffleHistory.pop();
+                loadTrack(prevIdx);
+                return;
+            }
+
             if (currentTrackIndex - 1 >= 0) {
                 loadTrack(currentTrackIndex - 1);
+            } else if (loopMode === 'all') {
+                loadTrack(playlist.length - 1);
             }
         }
 
+        function toggleShuffle() {
+            if (!isHost) return;
+            shuffleEnabled = !shuffleEnabled;
+            shuffleHistory = currentTrackIndex >= 0 ? [currentTrackIndex] : [];
+            updateLoopShuffleUI();
+            broadcastState();
+        }
+
+        function cycleLoopMode() {
+            if (!isHost) return;
+            loopMode = loopMode === 'off' ? 'all' : (loopMode === 'all' ? 'one' : 'off');
+            updateLoopShuffleUI();
+            broadcastState();
+        }
+
+        function updateLoopShuffleUI() {
+            const shuffleBtn = document.getElementById('shuffle-btn');
+            const shuffleDot = document.getElementById('shuffle-dot');
+            const loopBtn = document.getElementById('loop-btn');
+            const loopOneBadge = document.getElementById('loop-one-badge');
+
+            if (shuffleBtn) {
+                shuffleBtn.classList.toggle('text-[#1ED760]', shuffleEnabled);
+                shuffleBtn.classList.toggle('text-[#A7A7A7]', !shuffleEnabled);
+            }
+            if (shuffleDot) shuffleDot.classList.toggle('hidden', !shuffleEnabled);
+
+            if (loopBtn) {
+                const loopActive = loopMode !== 'off';
+                loopBtn.classList.toggle('text-[#1ED760]', loopActive);
+                loopBtn.classList.toggle('text-[#A7A7A7]', !loopActive);
+            }
+            if (loopOneBadge) loopOneBadge.classList.toggle('hidden', loopMode !== 'one');
+        }
+
         audioPlayer.onended = () => {
-            if (isHost && currentTrackIndex + 1 < playlist.length) {
+            if (!isHost) return;
+
+            if (loopMode === 'one') {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play().catch(() => { });
+                broadcastState();
+                return;
+            }
+
+            if (shuffleEnabled && playlist.length > 0) {
+                loadTrack(pickRandomIndex(currentTrackIndex));
+                return;
+            }
+
+            if (currentTrackIndex + 1 < playlist.length) {
                 loadTrack(currentTrackIndex + 1);
-            } else if (isHost) {
+            } else if (loopMode === 'all' && playlist.length > 0) {
+                loadTrack(0);
+            } else {
                 isPlaying = false;
                 updatePlayerDisplay();
                 broadcastState();
@@ -1400,10 +2194,10 @@
 
             if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
                 titleEl.innerText = playlist[currentTrackIndex].title;
-                statusEl.innerText = isPlaying ? "Playing in sync" : "Paused";
+                statusEl.innerText = isPlaying ? t('playing_sync') : t('paused');
             } else {
-                titleEl.innerText = "No Track Selected";
-                statusEl.innerText = "Waiting for playback...";
+                titleEl.innerText = t('no_track');
+                statusEl.innerText = t('waiting_playback');
                 currentTimeEl.innerText = "00:00";
                 totalDurationEl.innerText = "00:00";
                 seekSlider.value = 0;
@@ -1417,6 +2211,8 @@
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
             }
+
+            updateLoopShuffleUI();
         }
 
         function probeDuration(track) {
@@ -1443,13 +2239,14 @@
         function renderPlaylist() {
             const container = document.getElementById('playlist-container');
             const countEl = document.getElementById('tab-queue-count');
+            if (!container || !countEl) return;
 
             countEl.innerText = playlist.length;
 
             if (playlist.length === 0) {
                 container.innerHTML = `
           <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl">
-            Queue is empty
+            ${t('queue_empty')}
           </li>
         `;
                 return;
@@ -1471,7 +2268,7 @@
                         : 'hover:bg-[#181818]/60'
                     }">
             ${isHost ? `
-              <span class="drag-handle flex-shrink-0 text-[#535353] hover:text-[#A7A7A7] cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder">
+              <span class="drag-handle flex-shrink-0 text-[#535353] hover:text-[#A7A7A7] cursor-grab active:cursor-grabbing touch-none" title="${t('drag_title')}">
                 ${gripIconSvg}
               </span>
             ` : ''}
@@ -1489,7 +2286,7 @@
 
             <div class="min-w-0 flex-1">
               <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(track.title)}</p>
-              ${track.isLocal ? '<span class="text-[10px] text-[#1ED760] font-medium">Uploaded</span>' : ''}
+              ${track.isLocal ? `<span class="text-[10px] text-[#1ED760] font-medium">${t('uploaded_tag')}</span>` : ''}
             </div>
 
             <span class="text-[11px] font-mono text-[#727272] flex-shrink-0 tabular-nums">${durationLabel}</span>
@@ -1499,11 +2296,11 @@
                         }">
                 ${isActive && isPlaying ? pauseIconSvg : playIconSvg}
               </button>
-              <button data-remove-track="${i}" title="Remove from queue" class="remove-track-btn flex-shrink-0 p-1.5 rounded-lg text-[#727272] hover:text-red-400 hover:bg-[#282828] transition-all opacity-0 group-hover:opacity-100">
+              <button data-remove-track="${i}" title="${t('remove_track_title')}" class="remove-track-btn flex-shrink-0 p-1.5 rounded-lg text-[#727272] hover:text-red-400 hover:bg-[#282828] transition-all opacity-0 group-hover:opacity-100">
                 ${trashIconSvg}
               </button>
             ` : (isActive ? `
-              <span class="flex-shrink-0 text-[10px] font-semibold text-[#1ED760]">${isPlaying ? 'Playing' : 'Paused'}</span>
+              <span class="flex-shrink-0 text-[10px] font-semibold text-[#1ED760]">${isPlaying ? t('playing_sync') : t('paused')}</span>
             ` : '')}
           </li>
         `;
@@ -1686,11 +2483,13 @@
         document.getElementById('create-room-btn').addEventListener('click', createRoomServer);
         document.getElementById('join-room-btn').addEventListener('click', () => joinRoomWithCode());
         document.getElementById('leave-room-btn').addEventListener('click', returnToHomeScreen);
-        document.getElementById('save-lobby-btn').addEventListener('click', saveCurrentLobbyState);
+        document.getElementById('save-lobby-btn').addEventListener('click', saveLobbyStateToDB);
         document.getElementById('copy-link-btn').addEventListener('click', copyInviteLink);
         document.getElementById('prev-btn').addEventListener('click', playPreviousTrack);
         document.getElementById('play-btn').addEventListener('click', togglePlayPause);
         document.getElementById('next-btn').addEventListener('click', playNextTrack);
+        document.getElementById('shuffle-btn').addEventListener('click', toggleShuffle);
+        document.getElementById('loop-btn').addEventListener('click', cycleLoopMode);
         document.getElementById('local-file-input').addEventListener('change', handleLocalFileSelect);
         document.getElementById('add-track-btn').addEventListener('click', addTrackToPlaylist);
 
@@ -1708,6 +2507,17 @@
             }
         });
         document.getElementById('lobby-name-edit-input').addEventListener('blur', commitLobbyNameEdit);
+
+        document.getElementById('set-password-btn').addEventListener('click', () => openPasswordModal('set'));
+        document.getElementById('password-modal-cancel-btn').addEventListener('click', closePasswordModal);
+        document.getElementById('password-modal-submit-btn').addEventListener('click', submitPasswordModal);
+        document.getElementById('password-modal-remove-btn').addEventListener('click', removePasswordFromModal);
+        document.getElementById('password-modal-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitPasswordModal();
+            }
+        });
     </script>
 </body>
 
