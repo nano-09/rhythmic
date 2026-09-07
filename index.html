@@ -75,6 +75,45 @@
         [lang="ja"] {
             letter-spacing: 0;
         }
+
+        /* Marquee (scrolling title) — used for long track titles.
+           .marquee-wrap clips the text; .marquee-inner is the text itself.
+           JS measures overflow and sets --marquee-distance/--marquee-duration,
+           then toggles .marquee-eligible (can scroll) and .marquee-active
+           (currently scrolling — either because it's playing, or hovered). */
+        .marquee-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            min-width: 0;
+        }
+
+        .marquee-wrap .marquee-inner {
+            display: inline-block;
+            white-space: nowrap;
+            will-change: transform;
+        }
+
+        .marquee-wrap.marquee-active .marquee-inner {
+            animation: marquee-bounce var(--marquee-duration, 6s) ease-in-out infinite;
+        }
+
+        @keyframes marquee-bounce {
+
+            0%,
+            12% {
+                transform: translateX(0);
+            }
+
+            50% {
+                transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+            }
+
+            88%,
+            100% {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 
@@ -328,36 +367,12 @@
             </div>
         </div>
 
-        <div id="main-player-card"
-            class="w-full max-w-4xl bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-4 sm:p-6 md:p-8 space-y-6 hidden">
+        <div id="main-player-card" class="hidden fixed inset-0 z-0 flex flex-col bg-[#0a0a0a] text-[#F5F5F5]">
 
-            <div class="flex items-center gap-2">
-                <div class="min-w-0 flex-1">
-                    <h2 id="lobby-name-display" class="text-base font-bold text-white truncate">Lobby</h2>
-                    <input id="lobby-name-edit-input" type="text" maxlength="40"
-                        class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
-                </div>
-                <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
-                    class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                        </path>
-                    </svg>
-                </button>
-                <button id="set-password-btn" title="Set Room Password" data-i18n-title="set_password_title"
-                    class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
-                    <svg id="password-lock-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="flex flex-wrap gap-y-2 justify-between items-center border-b border-[#282828]/80 pb-4">
-                <div class="flex items-center gap-2">
+            <!-- TOP BAR -->
+            <header
+                class="flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-2 justify-between px-3 sm:px-6 py-2.5 border-b border-[#282828]/80 bg-[#000000]/50 backdrop-blur-xl">
+                <div class="flex items-center gap-2 min-w-0">
                     <button id="leave-room-btn" title="Return to Lobby Select" data-i18n-title="leave_room_title"
                         class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -367,11 +382,37 @@
                         </svg>
                     </button>
 
-                    <span id="role-badge"
-                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
-                        data-i18n="connecting">
-                        Connecting...
-                    </span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1 min-w-0">
+                            <h2 id="lobby-name-display"
+                                class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">
+                                Lobby</h2>
+                            <input id="lobby-name-edit-input" type="text" maxlength="40"
+                                class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-sm sm:text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
+                            <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button id="set-password-btn" title="Set Room Password" data-i18n-title="set_password_title"
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
+                                <svg id="password-lock-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                        <span id="role-badge"
+                            class="inline-block mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
+                            data-i18n="connecting">
+                            Connecting...
+                        </span>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap justify-end">
@@ -403,68 +444,221 @@
                         <span data-i18n="copy_btn">Copy</span>
                     </button>
                 </div>
-            </div>
+            </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 md:items-stretch">
+            <!-- MAIN SCROLLABLE CONTENT -->
+            <div class="flex-1 min-h-0 overflow-y-auto">
+                <div class="max-w-5xl mx-auto w-full px-3 sm:px-6 py-5 space-y-5">
 
-                <!-- LEFT COLUMN: Now Playing + Transport + Add Tracks -->
-                <div class="flex flex-col justify-center space-y-6 min-w-0">
-                    <div class="text-center space-y-1.5 py-1">
-                        <p id="current-track-title" class="text-lg font-bold text-white truncate px-4"
-                            data-i18n="no_track">No Track
-                            Selected</p>
-                        <div class="flex items-center justify-center gap-2">
-                            <span class="relative flex h-2 w-2">
-                                <span
-                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1ED760] opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-[#1DB954]"></span>
-                            </span>
-                            <p id="player-status-text" class="text-xs font-medium text-[#A7A7A7]"
-                                data-i18n="waiting_playback">Waiting for
-                                playback...</p>
+                    <!-- ADD A TRACK (host only) -->
+                    <div id="host-only-track-input-section"
+                        class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
+                        <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
+                            data-i18n="add_track_heading">Add a Track</h3>
+
+                        <div
+                            class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 mb-3">
+                            <button id="add-method-search-btn" data-method="search"
+                                class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                </svg>
+                                <span data-i18n="tab_search">Search</span>
+                            </button>
+                            <button id="add-method-upload-btn" data-method="upload"
+                                class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                    </path>
+                                </svg>
+                                <span data-i18n="tab_upload">Upload</span>
+                            </button>
+                            <button id="add-method-url-btn" data-method="url"
+                                class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5">
+                                    </path>
+                                </svg>
+                                <span data-i18n="tab_url">URL</span>
+                            </button>
+                        </div>
+
+                        <!-- The three panels below are stacked into the SAME grid cell
+                             (col-start-1 row-start-1) instead of being laid out one after
+                             another. That makes this grid container always size itself to
+                             whichever panel is tallest, so the card doesn't grow/shrink
+                             every time the user switches Search/Upload/URL tabs. Inactive
+                             panels are hidden with "invisible" (keeps their layout box,
+                             just hides it) rather than "hidden" (display:none, which would
+                             remove them from the grid's height calculation again). -->
+                        <div class="grid">
+                            <div id="add-method-search-panel"
+                                class="add-method-panel col-start-1 row-start-1 space-y-2">
+                                <div class="flex gap-2">
+                                    <input id="youtube-search-input" type="text"
+                                        data-i18n-placeholder="search_youtube_placeholder"
+                                        placeholder="Search for a song..."
+                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                                    <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
+                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p id="youtube-search-status" class="text-[10px] hidden"></p>
+                                <div id="youtube-search-results"
+                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
+                                </div>
+                            </div>
+
+                            <div id="add-method-upload-panel"
+                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                <div class="flex gap-2">
+                                    <label for="local-file-input"
+                                        class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
+                                        <span id="file-input-label" class="truncate" data-i18n="choose_files">Choose
+                                            MP3
+                                            file(s)...</span>
+                                        <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                            </path>
+                                        </svg>
+                                    </label>
+                                    <input id="local-file-input" type="file" multiple
+                                        accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
+                                </div>
+                                <p class="text-[10px] text-[#727272]" data-i18n="multi_select_hint">You can select
+                                    multiple files at once</p>
+                                <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
+                                    storage...
+                                </p>
+                            </div>
+
+                            <div id="add-method-url-panel"
+                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
+                                    placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                                    class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
+                                <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
+                                <button id="add-track-btn"
+                                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    <span data-i18n="add_btn">Add</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <audio id="audio-player" class="w-full hidden" controls></audio>
+                    <!-- QUEUE / USERS -->
+                    <div>
+                        <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
+                            <div
+                                class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
+                                <button id="tab-queue-btn"
+                                    class="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 px-4 rounded-full transition-all duration-150">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="queue_tab">Queue</span>
+                                    <span id="tab-queue-count"
+                                        class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
+                                </button>
+                                <button id="tab-users-btn"
+                                    class="flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 px-4 rounded-full transition-all duration-150">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-1.13-7.84">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="users_tab">Users</span>
+                                    <span id="tab-users-count"
+                                        class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
+                                </button>
+                            </div>
 
-                    <div class="flex items-center gap-3 px-1 pb-1">
-                        <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
-                            class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
-                            <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07">
-                                </path>
-                            </svg>
-                            <svg id="volume-icon-muted" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"></path>
-                            </svg>
-                        </button>
-                        <input id="volume-slider" type="range" min="0" max="100" value="100" step="1"
-                            title="Your volume (only affects your device)" data-i18n-title="volume_title"
-                            class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none" />
-                        <span id="volume-value"
-                            class="text-[10px] font-mono text-[#727272] w-7 text-right flex-shrink-0">100</span>
+                            <p id="queue-total-duration" class="text-[11px] font-medium text-[#727272] px-1"></p>
+                        </div>
+
+                        <div id="queue-tab-panel">
+                            <div
+                                class="hidden sm:grid grid-cols-[2rem_1fr_4.5rem] gap-2.5 px-3 pb-2 mb-1 text-[10px] uppercase tracking-wider text-[#727272] font-bold border-b border-[#282828]/60">
+                                <span>#</span>
+                                <span data-i18n="title_col">Title</span>
+                                <span class="text-right" data-i18n="duration_col">Duration</span>
+                            </div>
+                            <ul id="playlist-container" class="space-y-1.5">
+                                <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl"
+                                    data-i18n="queue_empty">
+                                    Queue is empty
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div id="users-tab-panel" class="hidden">
+                            <ul id="participants-container" class="space-y-1.5"></ul>
+                        </div>
                     </div>
 
-                    <div id="host-controls" class="space-y-4">
+                </div>
+            </div>
 
-                        <div class="space-y-1.5 px-1">
+            <!-- BOTTOM PLAYER BAR -->
+            <footer
+                class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
+                <audio id="audio-player" class="hidden" controls></audio>
+
+                <div class="max-w-6xl mx-auto flex flex-col gap-1.5">
+
+                    <div id="host-controls" class="contents">
+                        <div class="flex items-center gap-2">
+                            <span id="current-time"
+                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 text-right flex-shrink-0">00:00</span>
                             <input id="seek-slider" type="range" min="0" max="100" value="0" step="0.1"
                                 class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none disabled:cursor-not-allowed"
                                 disabled />
-                            <div
-                                class="flex justify-between items-center text-[11px] font-mono font-medium text-[#A7A7A7]">
-                                <span id="current-time">00:00</span>
-                                <span id="total-duration">00:00</span>
+                            <span id="total-duration"
+                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 flex-shrink-0">00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2 sm:gap-4">
+                        <!-- NOW PLAYING (left) -->
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="min-w-0 flex-1">
+                                <div id="current-track-title-wrap" class="marquee-wrap w-full">
+                                    <span id="current-track-title" class="marquee-inner text-sm font-bold text-white"
+                                        data-i18n="no_track">No Track Selected</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="relative flex h-1.5 w-1.5 flex-shrink-0">
+                                        <span
+                                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1ED760] opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#1DB954]"></span>
+                                    </span>
+                                    <p id="player-status-text" class="text-[11px] font-medium text-[#A7A7A7] truncate"
+                                        data-i18n="waiting_playback">Waiting for
+                                        playback...</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-center gap-5 pt-1">
+                        <!-- TRANSPORT (center) -->
+                        <div id="transport-controls"
+                            class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0">
                             <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
-                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4l5 5m0 0V5m0 4H5m11 6l5 5m0 0v-4m0 4h-4M4 20l16-16">
@@ -476,31 +670,32 @@
 
                             <button id="prev-btn"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                                 </svg>
                             </button>
 
                             <button id="play-btn"
-                                class="p-4 bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black rounded-full shadow-xl shadow-black/40 transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
-                                <svg id="play-icon" class="w-7 h-7 translate-x-0.5" fill="currentColor"
+                                class="p-3 sm:p-4 bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black rounded-full shadow-xl shadow-black/40 transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                <svg id="play-icon" class="w-6 h-6 sm:w-7 sm:h-7 translate-x-0.5" fill="currentColor"
                                     viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
-                                <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24">
+                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                 </svg>
                             </button>
 
                             <button id="next-btn"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
-                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                                 </svg>
                             </button>
 
                             <button id="loop-btn" title="Repeat" data-i18n-title="loop_title"
-                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-5.36M20 15a9 9 0 01-14.13 5.36">
@@ -511,162 +706,31 @@
                             </button>
                         </div>
 
-                        <div id="host-only-track-input-section" class="pt-4 border-t border-[#282828]">
-                            <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
-                                data-i18n="add_track_heading">Add a Track</h3>
-
-                            <div
-                                class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 mb-3">
-                                <button id="add-method-search-btn" data-method="search"
-                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                                    </svg>
-                                    <span data-i18n="tab_search">Search</span>
-                                </button>
-                                <button id="add-method-upload-btn" data-method="upload"
-                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                        </path>
-                                    </svg>
-                                    <span data-i18n="tab_upload">Upload</span>
-                                </button>
-                                <button id="add-method-url-btn" data-method="url"
-                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5">
-                                        </path>
-                                    </svg>
-                                    <span data-i18n="tab_url">URL</span>
-                                </button>
-                            </div>
-
-                            <!-- The three panels below are stacked into the SAME grid cell
-                                 (col-start-1 row-start-1) instead of being laid out one after
-                                 another. That makes this grid container always size itself to
-                                 whichever panel is tallest, so the card doesn't grow/shrink
-                                 every time the user switches Search/Upload/URL tabs. Inactive
-                                 panels are hidden with "invisible" (keeps their layout box,
-                                 just hides it) rather than "hidden" (display:none, which would
-                                 remove them from the grid's height calculation again). -->
-                            <div class="grid">
-                                <div id="add-method-search-panel"
-                                    class="add-method-panel col-start-1 row-start-1 space-y-2">
-                                    <div class="flex gap-2">
-                                        <input id="youtube-search-input" type="text"
-                                            data-i18n-placeholder="search_youtube_placeholder"
-                                            placeholder="Search for a song..."
-                                            class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                                        <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
-                                            class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                    <p id="youtube-search-status" class="text-[10px] hidden"></p>
-                                    <div id="youtube-search-results"
-                                        class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
-                                    </div>
-                                </div>
-
-                                <div id="add-method-upload-panel"
-                                    class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
-                                    <div class="flex gap-2">
-                                        <label for="local-file-input"
-                                            class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
-                                            <span id="file-input-label" class="truncate" data-i18n="choose_files">Choose
-                                                MP3
-                                                file(s)...</span>
-                                            <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                                </path>
-                                            </svg>
-                                        </label>
-                                        <input id="local-file-input" type="file" multiple
-                                            accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
-                                    </div>
-                                    <p class="text-[10px] text-[#727272]" data-i18n="multi_select_hint">You can select
-                                        multiple files at once</p>
-                                    <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
-                                        storage...
-                                    </p>
-                                </div>
-
-                                <div id="add-method-url-panel"
-                                    class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
-                                    <textarea id="track-url-input" rows="3"
-                                        data-i18n-placeholder="track_url_placeholder"
-                                        placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                                        class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
-                                    <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
-                                    <button id="add-track-btn"
-                                        class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        <span data-i18n="add_btn">Add</span>
-                                    </button>
-                                </div>
-                            </div>
-
+                        <!-- VOLUME (right) -->
+                        <div class="hidden md:flex items-center gap-2 flex-1 justify-end max-w-[180px]">
+                            <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
+                                <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07">
+                                    </path>
+                                </svg>
+                                <svg id="volume-icon-muted" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"></path>
+                                </svg>
+                            </button>
+                            <input id="volume-slider" type="range" min="0" max="100" value="100" step="1"
+                                title="Your volume (only affects your device)" data-i18n-title="volume_title"
+                                class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none" />
+                            <span id="volume-value"
+                                class="text-[10px] font-mono text-[#727272] w-7 text-right flex-shrink-0">100</span>
                         </div>
                     </div>
                 </div>
-
-                <!-- RIGHT COLUMN: Queue / Users, given full column height and space -->
-                <div class="flex flex-col min-w-0 md:border-l md:border-[#282828] md:pl-8">
-                    <div
-                        class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
-                        <button id="tab-queue-btn"
-                            class="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-full transition-all duration-150">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
-                                </path>
-                            </svg>
-                            <span data-i18n="queue_tab">Queue</span>
-                            <span id="tab-queue-count"
-                                class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
-                        </button>
-                        <button id="tab-users-btn"
-                            class="flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-full transition-all duration-150">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-1.13-7.84">
-                                </path>
-                            </svg>
-                            <span data-i18n="users_tab">Users</span>
-                            <span id="tab-users-count"
-                                class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#282828] text-[#A7A7A7]">0</span>
-                        </button>
-                    </div>
-
-                    <div id="queue-tab-panel" class="flex-1 min-h-0 mt-4">
-                        <ul id="playlist-container"
-                            class="space-y-1.5 h-full max-h-[280px] md:max-h-[420px] overflow-y-auto pr-1">
-                            <li class="text-xs text-[#727272] italic text-center py-10 border border-dashed border-[#282828] rounded-2xl"
-                                data-i18n="queue_empty">
-                                Queue is empty
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div id="users-tab-panel" class="hidden flex-1 min-h-0 mt-4">
-                        <ul id="participants-container"
-                            class="space-y-1.5 h-full max-h-[280px] md:max-h-[420px] overflow-y-auto pr-1"></ul>
-                    </div>
-                </div>
-
-            </div>
+            </footer>
 
         </div>
     </main>
@@ -813,6 +877,8 @@
                 add_btn: "Add",
                 queue_tab: "Queue",
                 users_tab: "Users",
+                title_col: "Title",
+                duration_col: "Duration",
                 queue_empty: "Queue is empty",
                 no_one_here: "No one here yet",
                 uploaded_tag: "Uploaded",
@@ -903,6 +969,8 @@
                 add_btn: "추가",
                 queue_tab: "대기열",
                 users_tab: "참여자",
+                title_col: "제목",
+                duration_col: "재생 시간",
                 queue_empty: "대기열이 비어 있습니다",
                 no_one_here: "아직 아무도 없습니다",
                 uploaded_tag: "업로드됨",
@@ -993,6 +1061,8 @@
                 add_btn: "追加",
                 queue_tab: "キュー",
                 users_tab: "参加者",
+                title_col: "タイトル",
+                duration_col: "再生時間",
                 queue_empty: "キューは空です",
                 no_one_here: "まだ誰もいません",
                 uploaded_tag: "アップロード済み",
@@ -1454,6 +1524,64 @@
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Formats a longer running total ("1h 12m", "8m", "45s") for the
+        // queue's combined length, as opposed to formatTime()'s mm:ss which
+        // is meant for a single track's current position.
+        function formatDurationLong(totalSeconds) {
+            const s = Math.round(totalSeconds);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m ${sec}s`;
+            return `${sec}s`;
+        }
+
+        // -------------------------------------------------------------
+        // MARQUEE (scrolling title for text that doesn't fit its box)
+        // -------------------------------------------------------------
+        // Measures whether the inner text overflows its wrapper and, if so,
+        // records how far (and how long) it should scroll via CSS custom
+        // properties. Returns true if the text is long enough to scroll.
+        function refreshMarquee(wrapEl) {
+            if (!wrapEl) return false;
+            const inner = wrapEl.querySelector('.marquee-inner');
+            if (!inner) return false;
+
+            // Reset first so the measurement isn't skewed by a previous scroll offset.
+            wrapEl.classList.remove('marquee-active');
+            inner.style.transform = '';
+
+            const overflow = inner.scrollWidth - wrapEl.clientWidth;
+            if (overflow > 4) {
+                wrapEl.style.setProperty('--marquee-distance', `${overflow}px`);
+                wrapEl.style.setProperty('--marquee-duration', `${Math.min(18, Math.max(4, overflow / 22))}s`);
+                wrapEl.dataset.marqueeEligible = 'true';
+                return true;
+            }
+            delete wrapEl.dataset.marqueeEligible;
+            return false;
+        }
+
+        // Wires up hover-to-scroll behavior on a title that isn't always
+        // scrolling (i.e. queue rows other than the currently playing one).
+        function attachMarqueeHover(wrapEl) {
+            if (!wrapEl || wrapEl._marqueeHoverAttached) return;
+            wrapEl._marqueeHoverAttached = true;
+            wrapEl.addEventListener('mouseenter', () => {
+                if (wrapEl.dataset.marqueeEligible === 'true') wrapEl.classList.add('marquee-active');
+            });
+            wrapEl.addEventListener('mouseleave', () => wrapEl.classList.remove('marquee-active'));
+        }
+
+        // Makes a title always scroll (no hover needed) when it's the
+        // currently-playing track — e.g. the big "Now Playing" title, and
+        // the active row in the queue.
+        function setMarqueeAlwaysOn(wrapEl) {
+            if (!wrapEl) return;
+            if (refreshMarquee(wrapEl)) wrapEl.classList.add('marquee-active');
         }
 
         // -------------------------------------------------------------
@@ -1999,7 +2127,7 @@
             const editNameBtn = document.getElementById('edit-lobby-name-btn');
             const setPasswordBtn = document.getElementById('set-password-btn');
             const trackInputSection = document.getElementById('host-only-track-input-section');
-            const controls = document.querySelectorAll('#host-controls button, #host-controls input, #host-controls label');
+            const controls = document.querySelectorAll('#host-controls input, #transport-controls button');
 
             if (isHost) {
                 badge.innerText = t('host_badge');
@@ -2427,11 +2555,54 @@
             if (isCurrentTrackYouTube()) updateSeekUI();
         }, 500);
 
+        // -------------------------------------------------------------
+        // MOBILE BACKGROUND TAB RECOVERY
+        // -------------------------------------------------------------
+        // Mobile browsers throttle or fully suspend timers, media elements,
+        // and realtime sockets while the tab/app is backgrounded. That can
+        // leave the seek bar, play state, and playback position stale (or
+        // the audio silently paused) by the time the user switches back.
+        // Force a resync as soon as the page becomes visible again so the
+        // displayed controls catch up immediately instead of drifting.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible') return;
+            if (!roomChannel) return;
+
+            if (isHost) {
+                // The host's own player may have been paused by the OS while
+                // backgrounded — restore it, then push the corrected state
+                // (position/isPlaying) out to everyone else.
+                if (isPlaying) playCurrentTrack();
+                broadcastState();
+            } else {
+                // Ask the host to resend the latest state rather than trust
+                // whatever this client's throttled clock thinks happened.
+                roomChannel.send({ type: 'broadcast', event: 'request-state', payload: {} });
+            }
+
+            updateSeekUI();
+            updatePlayerDisplay();
+        });
+
+        // While the host is actively dragging the seek slider, actually
+        // move the track's playback position (not just the visible time
+        // label) and broadcast at a throttled rate — this way guests track
+        // the scrub live instead of only snapping once the host releases it.
+        let lastScrubBroadcast = 0;
+        const SCRUB_BROADCAST_INTERVAL_MS = 300;
+
         seekSlider.oninput = () => {
             if (!isHost) return;
             isSeeking = true;
             const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
             currentTimeEl.innerText = formatTime(seekTime);
+            seekCurrentTrack(seekTime);
+
+            const now = Date.now();
+            if (now - lastScrubBroadcast >= SCRUB_BROADCAST_INTERVAL_MS) {
+                lastScrubBroadcast = now;
+                broadcastState();
+            }
         };
 
         seekSlider.onchange = () => {
@@ -2439,6 +2610,7 @@
             const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
             seekCurrentTrack(seekTime);
             isSeeking = false;
+            lastScrubBroadcast = Date.now();
             broadcastState();
         };
 
@@ -2621,6 +2793,11 @@
             }
 
             updatePlayerDisplay();
+            // Re-render the queue too — the active row's play/pause icon and
+            // its "now playing" animated bars are driven by isPlaying, and
+            // without this they'd stay stuck on whatever they showed when
+            // the row itself was last drawn.
+            renderPlaylist();
             broadcastState();
         }
 
@@ -2734,6 +2911,7 @@
         // -------------------------------------------------------------
         function updatePlayerDisplay() {
             const titleEl = document.getElementById('current-track-title');
+            const titleWrapEl = document.getElementById('current-track-title-wrap');
             const statusEl = document.getElementById('player-status-text');
             const playIcon = document.getElementById('play-icon');
             const pauseIcon = document.getElementById('pause-icon');
@@ -2757,6 +2935,12 @@
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
             }
+
+            // The now-playing title always auto-scrolls if it's too long to
+            // fit — no hover needed since it's the track currently playing.
+            // Measuring right after innerText changes can race the browser's
+            // layout pass, so defer one frame.
+            requestAnimationFrame(() => setMarqueeAlwaysOn(titleWrapEl));
 
             updateLoopShuffleUI();
         }
@@ -2782,12 +2966,40 @@
             probe.addEventListener('error', cleanup, { once: true });
         }
 
+        // Sums up every track's known duration and shows it next to the
+        // queue tabs (e.g. "12 songs • 45m 12s"). Tracks whose duration
+        // hasn't been probed yet are simply left out of the total — once
+        // probeDuration() resolves them, it re-renders and the total grows.
+        function updateQueueTotalDuration() {
+            const el = document.getElementById('queue-total-duration');
+            if (!el) return;
+
+            if (playlist.length === 0) {
+                el.innerText = '';
+                return;
+            }
+
+            const knownDurations = playlist.filter(tr => tr.duration && isFinite(tr.duration));
+            const totalSeconds = knownDurations.reduce((sum, tr) => sum + tr.duration, 0);
+            const songLabel = t('track_count', { n: playlist.length });
+
+            if (knownDurations.length === 0) {
+                el.innerText = songLabel;
+            } else if (knownDurations.length < playlist.length) {
+                // Not every duration is known yet — mark the total as a minimum.
+                el.innerText = `${songLabel} • ${formatDurationLong(totalSeconds)}+`;
+            } else {
+                el.innerText = `${songLabel} • ${formatDurationLong(totalSeconds)}`;
+            }
+        }
+
         function renderPlaylist() {
             const container = document.getElementById('playlist-container');
             const countEl = document.getElementById('tab-queue-count');
             if (!container || !countEl) return;
 
             countEl.innerText = playlist.length;
+            updateQueueTotalDuration();
 
             if (playlist.length === 0) {
                 container.innerHTML = `
@@ -2831,7 +3043,9 @@
             </div>
 
             <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium truncate ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(displayTrackTitle(track.title))}</p>
+              <div class="marquee-wrap w-full">
+                <span class="marquee-inner text-sm font-medium ${isActive ? 'text-[#B9F6CE]' : 'text-[#D1D1D1]'}">${escapeHtml(displayTrackTitle(track.title))}</span>
+              </div>
               ${track.isLocal ? `<span class="text-[10px] text-[#1ED760] font-medium">${t('uploaded_tag')}</span>` : ''}
               ${track.isYouTube ? `<span class="text-[10px] text-[#FF0000] font-medium">${t('youtube_tag')}</span>` : ''}
             </div>
@@ -2879,6 +3093,23 @@
             if (isHost) {
                 attachDragAndDropHandlers(container);
             }
+
+            // Queue row titles: the currently-playing row scrolls on its
+            // own (no hover needed, matching the big Now Playing title);
+            // every other long title scrolls only while hovered.
+            requestAnimationFrame(() => {
+                container.querySelectorAll('li[data-index]').forEach(li => {
+                    const wrap = li.querySelector('.marquee-wrap');
+                    if (!wrap) return;
+                    const idx = parseInt(li.getAttribute('data-index'), 10);
+                    if (idx === currentTrackIndex) {
+                        setMarqueeAlwaysOn(wrap);
+                    } else {
+                        refreshMarquee(wrap);
+                        attachMarqueeHover(wrap);
+                    }
+                });
+            });
 
             playlist.forEach(probeDuration);
         }
