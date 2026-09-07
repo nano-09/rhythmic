@@ -545,62 +545,77 @@
                                 </button>
                             </div>
 
-                            <div id="add-method-search-panel" class="add-method-panel space-y-2">
-                                <div class="flex gap-2">
-                                    <input id="youtube-search-input" type="text"
-                                        data-i18n-placeholder="search_youtube_placeholder"
-                                        placeholder="Search for a song..."
-                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                                    <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
-                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                            <!-- The three panels below are stacked into the SAME grid cell
+                                 (col-start-1 row-start-1) instead of being laid out one after
+                                 another. That makes this grid container always size itself to
+                                 whichever panel is tallest, so the card doesn't grow/shrink
+                                 every time the user switches Search/Upload/URL tabs. Inactive
+                                 panels are hidden with "invisible" (keeps their layout box,
+                                 just hides it) rather than "hidden" (display:none, which would
+                                 remove them from the grid's height calculation again). -->
+                            <div class="grid">
+                                <div id="add-method-search-panel"
+                                    class="add-method-panel col-start-1 row-start-1 space-y-2">
+                                    <div class="flex gap-2">
+                                        <input id="youtube-search-input" type="text"
+                                            data-i18n-placeholder="search_youtube_placeholder"
+                                            placeholder="Search for a song..."
+                                            class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                                        <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
+                                            class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p id="youtube-search-status" class="text-[10px] hidden"></p>
+                                    <div id="youtube-search-results"
+                                        class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
+                                    </div>
+                                </div>
+
+                                <div id="add-method-upload-panel"
+                                    class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                    <div class="flex gap-2">
+                                        <label for="local-file-input"
+                                            class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
+                                            <span id="file-input-label" class="truncate" data-i18n="choose_files">Choose
+                                                MP3
+                                                file(s)...</span>
+                                            <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                                </path>
+                                            </svg>
+                                        </label>
+                                        <input id="local-file-input" type="file" multiple
+                                            accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
+                                    </div>
+                                    <p class="text-[10px] text-[#727272]" data-i18n="multi_select_hint">You can select
+                                        multiple files at once</p>
+                                    <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
+                                        storage...
+                                    </p>
+                                </div>
+
+                                <div id="add-method-url-panel"
+                                    class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                    <textarea id="track-url-input" rows="3"
+                                        data-i18n-placeholder="track_url_placeholder"
+                                        placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                                        class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
+                                    <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
+                                    <button id="add-track-btn"
+                                        class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                                d="M12 4v16m8-8H4"></path>
                                         </svg>
+                                        <span data-i18n="add_btn">Add</span>
                                     </button>
                                 </div>
-                                <p id="youtube-search-status" class="text-[10px] hidden"></p>
-                                <div id="youtube-search-results"
-                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
-                                </div>
-                            </div>
-
-                            <div id="add-method-upload-panel" class="add-method-panel hidden space-y-2">
-                                <div class="flex gap-2">
-                                    <label for="local-file-input"
-                                        class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
-                                        <span id="file-input-label" class="truncate" data-i18n="choose_files">Choose MP3
-                                            file(s)...</span>
-                                        <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
-                                            </path>
-                                        </svg>
-                                    </label>
-                                    <input id="local-file-input" type="file" multiple
-                                        accept="audio/mp3,audio/wav,audio/ogg,audio/aac,audio/*" class="hidden" />
-                                </div>
-                                <p class="text-[10px] text-[#727272]" data-i18n="multi_select_hint">You can select
-                                    multiple files at once</p>
-                                <p id="upload-status" class="text-[10px] text-[#1ED760] hidden">Uploading to lobby
-                                    storage...
-                                </p>
-                            </div>
-
-                            <div id="add-method-url-panel" class="add-method-panel hidden space-y-2">
-                                <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
-                                    placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                                    class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
-                                <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
-                                <button id="add-track-btn"
-                                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 4v16m8-8H4"></path>
-                                    </svg>
-                                    <span data-i18n="add_btn">Add</span>
-                                </button>
                             </div>
 
                         </div>
@@ -3034,11 +3049,11 @@
                 if (m === method) {
                     btn.classList.add('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
                     btn.classList.remove('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
-                    panel.classList.remove('hidden');
+                    panel.classList.remove('invisible', 'pointer-events-none');
                 } else {
                     btn.classList.remove('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
                     btn.classList.add('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
-                    panel.classList.add('hidden');
+                    panel.classList.add('invisible', 'pointer-events-none');
                 }
             });
         }
