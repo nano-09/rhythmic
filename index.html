@@ -511,12 +511,61 @@
                             </button>
                         </div>
 
-                        <div id="host-only-track-input-section" class="space-y-3 pt-4 border-t border-[#282828]">
+                        <div id="host-only-track-input-section" class="pt-4 border-t border-[#282828]">
+                            <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
+                                data-i18n="add_track_heading">Add a Track</h3>
 
-                            <div class="space-y-1.5">
-                                <label class="block text-xs font-semibold text-[#B3B3B3]"
-                                    data-i18n="upload_label">Upload Local MP3 / Audio
-                                    Files</label>
+                            <div
+                                class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 mb-3">
+                                <button id="add-method-search-btn" data-method="search"
+                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                    </svg>
+                                    <span data-i18n="tab_search">Search</span>
+                                </button>
+                                <button id="add-method-upload-btn" data-method="upload"
+                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="tab_upload">Upload</span>
+                                </button>
+                                <button id="add-method-url-btn" data-method="url"
+                                    class="add-method-btn flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2 rounded-full transition-all duration-150">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5">
+                                        </path>
+                                    </svg>
+                                    <span data-i18n="tab_url">URL</span>
+                                </button>
+                            </div>
+
+                            <div id="add-method-search-panel" class="add-method-panel space-y-2">
+                                <div class="flex gap-2">
+                                    <input id="youtube-search-input" type="text"
+                                        data-i18n-placeholder="search_youtube_placeholder"
+                                        placeholder="Search for a song..."
+                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                                    <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
+                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p id="youtube-search-status" class="text-[10px] hidden"></p>
+                                <div id="youtube-search-results"
+                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
+                                </div>
+                            </div>
+
+                            <div id="add-method-upload-panel" class="add-method-panel hidden space-y-2">
                                 <div class="flex gap-2">
                                     <label for="local-file-input"
                                         class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
@@ -539,36 +588,11 @@
                                 </p>
                             </div>
 
-                            <div class="space-y-1.5">
-                                <label for="youtube-search-input" class="block text-xs font-semibold text-[#B3B3B3]"
-                                    data-i18n="search_youtube_label">Search YouTube</label>
-                                <div class="flex gap-2">
-                                    <input id="youtube-search-input" type="text"
-                                        data-i18n-placeholder="search_youtube_placeholder"
-                                        placeholder="Search for a song..."
-                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                                    <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
-                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                                <p id="youtube-search-status" class="text-[10px] hidden"></p>
-                                <div id="youtube-search-results"
-                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
-                                </div>
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">
-                                    <span data-i18n="add_url_label">Or Add Audio Stream / YouTube URL(s)</span>
-                                    <span class="text-[#727272] font-normal" data-i18n="one_per_line">(one per
-                                        line)</span></label>
+                            <div id="add-method-url-panel" class="add-method-panel hidden space-y-2">
                                 <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
                                     placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                                     class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
+                                <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
                                 <button id="add-track-btn"
                                     class="w-full bg-[#1DB954] hover:bg-[#1ED760] hover:scale-[1.01] text-black text-xs font-bold px-4 py-2.5 rounded-full shadow-md shadow-[#1DB954]/20 transition-all duration-200 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -750,6 +774,10 @@
                 waiting_playback: "Waiting for playback...",
                 playing_sync: "Playing in sync",
                 paused: "Paused",
+                add_track_heading: "Add a Track",
+                tab_search: "Search",
+                tab_upload: "Upload",
+                tab_url: "URL",
                 upload_label: "Upload Local MP3 / Audio Files",
                 choose_files: "Choose MP3 file(s)...",
                 files_selected: "{n} files selected",
@@ -765,7 +793,7 @@
                 search_quota_exceeded: "Daily search limit reached. Try again tomorrow, or paste a URL instead.",
                 added_to_queue: "Added \"{title}\" to the queue.",
                 add_url_label: "Or Add Audio Stream / YouTube URL(s)",
-                one_per_line: "(one per line)",
+                one_per_line: "One URL per line — audio stream or YouTube link",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "Add",
                 queue_tab: "Queue",
@@ -836,6 +864,10 @@
                 waiting_playback: "재생 대기 중...",
                 playing_sync: "동기화되어 재생 중",
                 paused: "일시정지됨",
+                add_track_heading: "트랙 추가",
+                tab_search: "검색",
+                tab_upload: "업로드",
+                tab_url: "URL",
                 upload_label: "로컬 MP3 / 오디오 파일 업로드",
                 choose_files: "MP3 파일 선택...",
                 files_selected: "{n}개 파일 선택됨",
@@ -851,7 +883,7 @@
                 search_quota_exceeded: "오늘의 검색 한도를 초과했습니다. 내일 다시 시도하거나 URL을 붙여넣어주세요.",
                 added_to_queue: "\"{title}\"을(를) 대기열에 추가했습니다.",
                 add_url_label: "또는 오디오 스트림 / 유튜브 URL 추가",
-                one_per_line: "(한 줄에 하나씩)",
+                one_per_line: "한 줄에 URL 하나씩 — 오디오 스트림 또는 유튜브 링크",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "추가",
                 queue_tab: "대기열",
@@ -922,6 +954,10 @@
                 waiting_playback: "再生を待っています...",
                 playing_sync: "同期して再生中",
                 paused: "一時停止中",
+                add_track_heading: "トラックを追加",
+                tab_search: "検索",
+                tab_upload: "アップロード",
+                tab_url: "URL",
                 upload_label: "ローカルMP3 / 音声ファイルをアップロード",
                 choose_files: "MP3ファイルを選択...",
                 files_selected: "{n}個のファイルを選択",
@@ -937,7 +973,7 @@
                 search_quota_exceeded: "本日の検索上限に達しました。明日再度お試しいただくか、URLを貼り付けてください。",
                 added_to_queue: "「{title}」をキューに追加しました。",
                 add_url_label: "または音声ストリーム/YouTubeのURLを追加",
-                one_per_line: "(1行に1つ)",
+                one_per_line: "1行に1つのURL — 音声ストリームまたはYouTubeリンク",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 add_btn: "追加",
                 queue_tab: "キュー",
@@ -2982,6 +3018,35 @@
                 usersPanel.classList.add('hidden');
             }
         }
+
+        // -------------------------------------------------------------
+        // TABS: ADD TRACK (SEARCH / UPLOAD / URL)
+        // -------------------------------------------------------------
+        function setAddMethodTab(method) {
+            const methods = ['search', 'upload', 'url'];
+            if (!methods.includes(method)) method = 'search';
+
+            methods.forEach((m) => {
+                const btn = document.getElementById(`add-method-${m}-btn`);
+                const panel = document.getElementById(`add-method-${m}-panel`);
+                if (!btn || !panel) return;
+
+                if (m === method) {
+                    btn.classList.add('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
+                    btn.classList.remove('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
+                    panel.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('bg-[#1DB954]', 'text-black', 'shadow-md', 'shadow-[#1DB954]/20');
+                    btn.classList.add('text-[#A7A7A7]', 'hover:text-[#D1D1D1]');
+                    panel.classList.add('hidden');
+                }
+            });
+        }
+
+        document.querySelectorAll('.add-method-btn').forEach((btn) => {
+            btn.addEventListener('click', () => setAddMethodTab(btn.getAttribute('data-method')));
+        });
+        setAddMethodTab('search');
 
         // Attach Event Listeners
         document.getElementById('tab-queue-btn').addEventListener('click', () => setActiveTab('queue'));
