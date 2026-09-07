@@ -540,6 +540,28 @@
                             </div>
 
                             <div class="space-y-1.5">
+                                <label for="youtube-search-input" class="block text-xs font-semibold text-[#B3B3B3]"
+                                    data-i18n="search_youtube_label">Search YouTube</label>
+                                <div class="flex gap-2">
+                                    <input id="youtube-search-input" type="text"
+                                        data-i18n-placeholder="search_youtube_placeholder"
+                                        placeholder="Search for a song..."
+                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                                    <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
+                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p id="youtube-search-status" class="text-[10px] hidden"></p>
+                                <div id="youtube-search-results"
+                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
                                 <label for="track-url-input" class="block text-xs font-semibold text-[#B3B3B3]">
                                     <span data-i18n="add_url_label">Or Add Audio Stream / YouTube URL(s)</span>
                                     <span class="text-[#727272] font-normal" data-i18n="one_per_line">(one per
@@ -734,6 +756,14 @@
                 multi_select_hint: "You can select multiple files at once",
                 uploading: "Uploading to lobby storage...",
                 uploading_progress: "Uploading {i} of {n}: {name}",
+                search_youtube_label: "Search YouTube",
+                search_youtube_placeholder: "Search for a song...",
+                search_btn: "Search",
+                searching_youtube: "Searching...",
+                no_search_results: "No results found.",
+                search_error: "Search failed. Please try again.",
+                search_quota_exceeded: "Daily search limit reached. Try again tomorrow, or paste a URL instead.",
+                added_to_queue: "Added \"{title}\" to the queue.",
                 add_url_label: "Or Add Audio Stream / YouTube URL(s)",
                 one_per_line: "(one per line)",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -812,6 +842,14 @@
                 multi_select_hint: "여러 파일을 한 번에 선택할 수 있습니다",
                 uploading: "로비 저장소에 업로드 중...",
                 uploading_progress: "업로드 중 {i}/{n}: {name}",
+                search_youtube_label: "유튜브 검색",
+                search_youtube_placeholder: "곡 제목을 검색하세요...",
+                search_btn: "검색",
+                searching_youtube: "검색 중...",
+                no_search_results: "검색 결과가 없습니다.",
+                search_error: "검색에 실패했습니다. 다시 시도해주세요.",
+                search_quota_exceeded: "오늘의 검색 한도를 초과했습니다. 내일 다시 시도하거나 URL을 붙여넣어주세요.",
+                added_to_queue: "\"{title}\"을(를) 대기열에 추가했습니다.",
                 add_url_label: "또는 오디오 스트림 / 유튜브 URL 추가",
                 one_per_line: "(한 줄에 하나씩)",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -890,6 +928,14 @@
                 multi_select_hint: "複数のファイルを一度に選択できます",
                 uploading: "ロビーのストレージにアップロード中...",
                 uploading_progress: "アップロード中 {i}/{n}: {name}",
+                search_youtube_label: "YouTubeを検索",
+                search_youtube_placeholder: "曲名を検索...",
+                search_btn: "検索",
+                searching_youtube: "検索中...",
+                no_search_results: "検索結果が見つかりません。",
+                search_error: "検索に失敗しました。もう一度お試しください。",
+                search_quota_exceeded: "本日の検索上限に達しました。明日再度お試しいただくか、URLを貼り付けてください。",
+                added_to_queue: "「{title}」をキューに追加しました。",
                 add_url_label: "または音声ストリーム/YouTubeのURLを追加",
                 one_per_line: "(1行に1つ)",
                 track_url_placeholder: "https://example.com/song1.mp3\nhttps://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -1196,6 +1242,151 @@
                 })
                 .catch(() => { });
         }
+
+        // -------------------------------------------------------------
+        // YOUTUBE SEARCH (YouTube Data API v3 — lets the host search
+        // for a song by name and add it straight to the queue, instead
+        // of pasting a URL). Each search costs 100 quota units against
+        // the free 10,000/day tier (~100 searches/day).
+        // -------------------------------------------------------------
+        const YOUTUBE_API_KEY = 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
+
+        const youtubeSearchInput = document.getElementById('youtube-search-input');
+        const youtubeSearchBtn = document.getElementById('youtube-search-btn');
+        const youtubeSearchStatus = document.getElementById('youtube-search-status');
+        const youtubeSearchResults = document.getElementById('youtube-search-results');
+
+        let youtubeSearchAbortController = null;
+
+        // The Data API returns titles/channel names HTML-escaped (e.g.
+        // "Rock &amp; Roll") — decode before storing as plain track.title,
+        // since renderPlaylist() escapes titles itself when displaying them.
+        function decodeHtmlEntities(str) {
+            const el = document.createElement('textarea');
+            el.innerHTML = str || '';
+            return el.value;
+        }
+
+        function setSearchStatus(text, tone) {
+            if (!youtubeSearchStatus) return;
+            youtubeSearchStatus.classList.remove('text-[#727272]', 'text-red-400', 'text-[#1ED760]');
+            if (!text) {
+                youtubeSearchStatus.classList.add('hidden');
+                youtubeSearchStatus.textContent = '';
+                return;
+            }
+            youtubeSearchStatus.textContent = text;
+            youtubeSearchStatus.classList.remove('hidden');
+            youtubeSearchStatus.classList.add(tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-[#1ED760]' : 'text-[#727272]');
+        }
+
+        async function searchYouTube() {
+            if (!isHost || !youtubeSearchInput) return;
+            const query = youtubeSearchInput.value.trim();
+            if (!query) return;
+
+            if (youtubeSearchAbortController) youtubeSearchAbortController.abort();
+            youtubeSearchAbortController = new AbortController();
+
+            youtubeSearchResults.innerHTML = '';
+            youtubeSearchResults.classList.add('hidden');
+            setSearchStatus(t('searching_youtube'));
+            youtubeSearchBtn.disabled = true;
+
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+                const res = await fetch(url, { signal: youtubeSearchAbortController.signal });
+                const data = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    const reason = data?.error?.errors?.[0]?.reason;
+                    const message = reason === 'quotaExceeded' ? t('search_quota_exceeded') : (data?.error?.message || t('search_error'));
+                    throw new Error(message);
+                }
+
+                const items = data.items || [];
+                if (items.length === 0) {
+                    setSearchStatus(t('no_search_results'));
+                    return;
+                }
+
+                setSearchStatus(null);
+                renderYoutubeSearchResults(items);
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+                console.error('[SyncBeats] YouTube search failed', err);
+                setSearchStatus(err.message || t('search_error'), 'error');
+            } finally {
+                youtubeSearchBtn.disabled = false;
+            }
+        }
+
+        function renderYoutubeSearchResults(items) {
+            youtubeSearchResults.innerHTML = items.map(item => {
+                const videoId = item.id && item.id.videoId;
+                if (!videoId) return '';
+                const title = decodeHtmlEntities(item.snippet?.title || '');
+                const channel = decodeHtmlEntities(item.snippet?.channelTitle || '');
+                const thumb = item.snippet?.thumbnails?.default?.url || '';
+                return `
+              <button type="button" data-video-id="${videoId}" data-title="${escapeHtml(title)}"
+                  class="yt-search-result-item w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#181818] transition-all text-left">
+                <img src="${thumb}" class="w-10 h-10 rounded object-cover flex-shrink-0 bg-[#282828]" loading="lazy" />
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-medium text-white truncate">${escapeHtml(title)}</p>
+                  <p class="text-[10px] text-[#A7A7A7] truncate">${escapeHtml(channel)}</p>
+                </div>
+                <svg class="w-4 h-4 text-[#1DB954] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </button>`;
+            }).join('');
+            youtubeSearchResults.classList.remove('hidden');
+
+            youtubeSearchResults.querySelectorAll('.yt-search-result-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addYoutubeSearchResultToQueue(btn.getAttribute('data-video-id'), btn.getAttribute('data-title'));
+                });
+            });
+        }
+
+        function addYoutubeSearchResultToQueue(videoId, title) {
+            if (!isHost || !videoId) return;
+
+            const track = {
+                id: Date.now(),
+                title: title || `YouTube (${videoId})`,
+                url: `https://www.youtube.com/watch?v=${videoId}`,
+                filePath: null,
+                isLocal: false,
+                isYouTube: true,
+                youtubeId: videoId
+            };
+
+            playlist.push(track);
+
+            if (currentTrackIndex === -1) {
+                currentTrackIndex = 0;
+                loadTrack(0);
+            } else {
+                renderPlaylist();
+            }
+
+            broadcastState();
+
+            // Collapse the results but keep the query in place, so the host
+            // can add several tracks from the same search without retyping it.
+            youtubeSearchResults.classList.add('hidden');
+            setSearchStatus(t('added_to_queue', { title: displayTrackTitle(title || videoId) }), 'success');
+        }
+
+        youtubeSearchBtn?.addEventListener('click', searchYouTube);
+        youtubeSearchInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchYouTube();
+            }
+        });
 
         const audioPlayer = document.getElementById('audio-player');
         const seekSlider = document.getElementById('seek-slider');
