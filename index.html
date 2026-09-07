@@ -100,7 +100,8 @@
     <!-- JOIN / UNLOCK AUDIO OVERLAY -->
     <div id="join-overlay"
         class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
-        <div class="bg-[#181818]/90 p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
+        <div
+            class="bg-[#181818]/90 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
             <div
                 class="w-16 h-16 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/30">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +127,7 @@
     <div id="password-modal"
         class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
         <div
-            class="bg-[#181818]/95 p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
+            class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
             <div class="w-14 h-14 mx-auto bg-[#282828] rounded-2xl flex items-center justify-center">
                 <svg class="w-7 h-7 text-[#1ED760]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -187,7 +188,7 @@
 
     <main class="w-full flex justify-center">
         <div id="nickname-screen"
-            class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-6">
+            class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-5 sm:p-8 space-y-6">
             <div class="text-center space-y-2">
                 <div
                     class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
@@ -328,7 +329,7 @@
         </div>
 
         <div id="main-player-card"
-            class="w-full max-w-4xl bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-6 md:p-8 space-y-6 hidden">
+            class="w-full max-w-4xl bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-4 sm:p-6 md:p-8 space-y-6 hidden">
 
             <div class="flex items-center gap-2">
                 <div class="min-w-0 flex-1">
@@ -355,10 +356,10 @@
                 </button>
             </div>
 
-            <div class="flex justify-between items-center border-b border-[#282828]/80 pb-4">
+            <div class="flex flex-wrap gap-y-2 justify-between items-center border-b border-[#282828]/80 pb-4">
                 <div class="flex items-center gap-2">
                     <button id="leave-room-btn" title="Return to Lobby Select" data-i18n-title="leave_room_title"
-                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center">
+                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
@@ -367,13 +368,13 @@
                     </button>
 
                     <span id="role-badge"
-                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3]"
+                        class="px-3 py-1 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
                         data-i18n="connecting">
                         Connecting...
                     </span>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap justify-end">
                     <button id="save-lobby-btn" title="Save Lobby State"
                         class="hidden bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 active:scale-95">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -384,15 +385,16 @@
                         <span data-i18n="save_btn">Save</span>
                     </button>
 
-                    <div class="bg-[#000000] border border-[#282828] px-3 py-1.5 rounded-full flex items-center gap-2">
-                        <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider"
+                    <div
+                        class="bg-[#000000] border border-[#282828] px-3 py-1.5 rounded-full flex items-center gap-2 flex-shrink-0">
+                        <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider whitespace-nowrap"
                             data-i18n="code_label">Code:</span>
                         <span id="active-room-code"
-                            class="text-xs font-mono font-bold text-[#1ED760] tracking-wider">------</span>
+                            class="text-xs font-mono font-bold text-[#1ED760] tracking-wider whitespace-nowrap">------</span>
                     </div>
 
                     <button id="copy-link-btn"
-                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95">
+                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
@@ -2554,7 +2556,7 @@
                 const durationLabel = track.duration ? formatTime(track.duration) : '--:--';
 
                 return `
-          <li data-index="${i}" draggable="${isHost ? 'true' : 'false'}"
+          <li data-index="${i}"
               class="drag-row group flex items-center gap-2.5 px-3 py-3 rounded-xl border-2 border-transparent transition-colors duration-100 ${isActive
                         ? 'bg-[#1DB954]/10 !border-[#1DB954]/30'
                         : 'hover:bg-[#181818]/60'
@@ -2585,11 +2587,11 @@
             <span class="text-[11px] font-mono text-[#727272] flex-shrink-0 tabular-nums">${durationLabel}</span>
 
             ${isHost ? `
-              <button data-play-track="${i}" class="play-track-btn flex-shrink-0 p-1.5 rounded-lg transition-all ${isActive ? 'text-[#4CD97B] hover:bg-[#282828]' : 'text-[#727272] hover:text-white hover:bg-[#282828] opacity-0 group-hover:opacity-100'
+              <button data-play-track="${i}" class="play-track-btn flex-shrink-0 p-1.5 rounded-lg transition-all ${isActive ? 'text-[#4CD97B] hover:bg-[#282828]' : 'text-[#727272] hover:text-white hover:bg-[#282828] opacity-100 md:opacity-0 md:group-hover:opacity-100'
                         }">
                 ${isActive && isPlaying ? pauseIconSvg : playIconSvg}
               </button>
-              <button data-remove-track="${i}" title="${t('remove_track_title')}" class="remove-track-btn flex-shrink-0 p-1.5 rounded-lg text-[#727272] hover:text-red-400 hover:bg-[#282828] transition-all opacity-0 group-hover:opacity-100">
+              <button data-remove-track="${i}" title="${t('remove_track_title')}" class="remove-track-btn flex-shrink-0 p-1.5 rounded-lg text-[#727272] hover:text-red-400 hover:bg-[#282828] transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100">
                 ${trashIconSvg}
               </button>
             ` : (isActive ? `
@@ -2666,47 +2668,62 @@
         let dragSourceIndex = null;
 
         function attachDragAndDropHandlers(container) {
-            const rows = container.querySelectorAll('li[data-index]');
+            const rows = Array.from(container.querySelectorAll('li[data-index]'));
 
             const clearDropIndicators = () => {
                 rows.forEach(el => el.classList.remove('!border-t-[#1DB954]', 'border-dashed'));
             };
 
+            const findRowAt = (x, y) => {
+                const el = document.elementFromPoint(x, y);
+                return el ? el.closest('li[data-index]') : null;
+            };
+
             rows.forEach((row) => {
-                row.addEventListener('dragstart', (e) => {
+                const handle = row.querySelector('.drag-handle');
+                if (!handle) return;
+
+                // Pointer Events unify mouse + touch + pen, unlike the native
+                // HTML5 drag-and-drop API which never fires on touch devices —
+                // that's what made queue reordering silently do nothing on mobile.
+                handle.addEventListener('pointerdown', (e) => {
+                    if (e.pointerType === 'mouse' && e.button !== 0) return;
+                    e.preventDefault();
+
                     dragSourceIndex = parseInt(row.getAttribute('data-index'), 10);
+                    let dropTargetIndex = dragSourceIndex;
                     row.classList.add('opacity-40');
-                    if (e.dataTransfer) {
-                        e.dataTransfer.effectAllowed = 'move';
-                        try { e.dataTransfer.setData('text/plain', String(dragSourceIndex)); } catch (_) { }
-                    }
-                });
 
-                row.addEventListener('dragend', () => {
-                    row.classList.remove('opacity-40');
-                    clearDropIndicators();
-                    dragSourceIndex = null;
-                });
+                    try { handle.setPointerCapture(e.pointerId); } catch (_) { }
 
-                row.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-                    if (dragSourceIndex === null) return;
-                    clearDropIndicators();
-                    row.classList.add('!border-t-[#1DB954]', 'border-dashed');
-                });
+                    const onMove = (moveEvent) => {
+                        if (dragSourceIndex === null) return;
+                        const targetRow = findRowAt(moveEvent.clientX, moveEvent.clientY);
+                        clearDropIndicators();
+                        if (targetRow && targetRow !== row) {
+                            targetRow.classList.add('!border-t-[#1DB954]', 'border-dashed');
+                            dropTargetIndex = parseInt(targetRow.getAttribute('data-index'), 10);
+                        } else {
+                            dropTargetIndex = dragSourceIndex;
+                        }
+                    };
 
-                row.addEventListener('dragleave', () => {
-                    row.classList.remove('!border-t-[#1DB954]', 'border-dashed');
-                });
+                    const onUp = () => {
+                        document.removeEventListener('pointermove', onMove);
+                        document.removeEventListener('pointerup', onUp);
+                        document.removeEventListener('pointercancel', onUp);
+                        clearDropIndicators();
+                        row.classList.remove('opacity-40');
 
-                row.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    clearDropIndicators();
-                    const targetIndex = parseInt(row.getAttribute('data-index'), 10);
-                    if (dragSourceIndex === null || isNaN(targetIndex) || dragSourceIndex === targetIndex) return;
-                    reorderPlaylist(dragSourceIndex, targetIndex);
-                    dragSourceIndex = null;
+                        if (dragSourceIndex !== null && dropTargetIndex !== null && dropTargetIndex !== dragSourceIndex) {
+                            reorderPlaylist(dragSourceIndex, dropTargetIndex);
+                        }
+                        dragSourceIndex = null;
+                    };
+
+                    document.addEventListener('pointermove', onMove);
+                    document.addEventListener('pointerup', onUp);
+                    document.addEventListener('pointercancel', onUp);
                 });
             });
         }
