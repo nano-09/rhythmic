@@ -1520,6 +1520,8 @@
             currentTrackIndex = -1;
             loopMode = 'off';
             shuffleEnabled = false;
+            renderPlaylist();
+            updatePlayerDisplay();
 
             window.history.replaceState({}, '', window.location.pathname);
 
@@ -1626,6 +1628,8 @@
             currentTrackIndex = -1;
             loopMode = 'off';
             shuffleEnabled = false;
+            renderPlaylist();
+            updatePlayerDisplay();
 
             window.history.replaceState({}, '', `?room=${roomId}`);
 
@@ -1687,14 +1691,20 @@
                     if (joinTrack.isYouTube) {
                         syncYoutubePlayer(joinTrack, joinTime, false);
                     } else {
+                        stopYoutubePlayback();
                         audioPlayer.src = joinTrack.url;
                         audioPlayer.currentTime = joinTime;
                     }
-                    renderPlaylist();
-                    updatePlayerDisplay();
                 } else {
-                    renderPlaylist();
+                    // Joined a room with no active track — make sure nothing
+                    // from a previously joined room is still loaded/playing.
+                    audioPlayer.pause();
+                    audioPlayer.removeAttribute('src');
+                    stopYoutubePlayback();
                 }
+
+                renderPlaylist();
+                updatePlayerDisplay();
             };
 
             // Host never needs a password to their own room.
