@@ -1568,6 +1568,77 @@
             }
         }
 
+        // -------------------------------------------------------------
+        // MEDIA SESSION (lock-screen / notification-shade controls)
+        // -------------------------------------------------------------
+        // This is also the main lever mobile browsers give a web page to
+        // keep playing and responding once it's no longer the active tab
+        // or the screen is off: a page with an active Media Session tied
+        // to genuinely playing media is treated much closer to a native
+        // background-audio app, whereas an ordinary hidden tab has its
+        // timers, the realtime socket, and the audio element itself
+        // throttled or fully suspended fairly quickly. Without this,
+        // handleIncomingState() can arrive but never actually take
+        // effect on a backgrounded guest's phone.
+        function updateMediaSessionMetadata() {
+            if (!('mediaSession' in navigator)) return;
+            try {
+                if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
+                    const track = playlist[currentTrackIndex];
+                    const thumbUrl = getTrackThumbnailUrl(track);
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: displayTrackTitle(track.title),
+                        artist: lobbyName || 'Sync Beats',
+                        album: 'Sync Beats',
+                        artwork: thumbUrl ? [{ src: thumbUrl, sizes: '320x180', type: 'image/jpeg' }] : []
+                    });
+                } else {
+                    navigator.mediaSession.metadata = null;
+                }
+            } catch (_) { /* MediaMetadata unsupported — safe to ignore */ }
+        }
+
+        function updateMediaSessionPlaybackState() {
+            if (!('mediaSession' in navigator)) return;
+            try {
+                navigator.mediaSession.playbackState = (currentTrackIndex >= 0 && isPlaying) ? 'playing' : 'paused';
+            } catch (_) { }
+        }
+
+        // Guests don't drive playback themselves — the room is host-controlled
+        // — so their lock-screen/notification buttons shouldn't act locally
+        // (that would just drift out of sync). Instead they ask the host to
+        // resend the current state, same as the background-tab recovery path.
+        function requestFreshStateFromHost() {
+            if (roomChannel) {
+                roomChannel.send({ type: 'broadcast', event: 'request-state', payload: {} });
+            }
+        }
+
+        // Re-run whenever the host/guest role changes (initial join, or a
+        // host handoff) so the lock-screen buttons always do the right thing
+        // for the current role.
+        function configureMediaSessionActionHandlers() {
+            if (!('mediaSession' in navigator)) return;
+
+            const setHandler = (action, handler) => {
+                try { navigator.mediaSession.setActionHandler(action, handler); }
+                catch (_) { /* action unsupported by this browser */ }
+            };
+
+            if (isHost) {
+                setHandler('play', () => togglePlayPause());
+                setHandler('pause', () => togglePlayPause());
+                setHandler('previoustrack', () => playPreviousTrack());
+                setHandler('nexttrack', () => playNextTrack());
+            } else {
+                setHandler('play', requestFreshStateFromHost);
+                setHandler('pause', requestFreshStateFromHost);
+                setHandler('previoustrack', requestFreshStateFromHost);
+                setHandler('nexttrack', requestFreshStateFromHost);
+            }
+        }
+
         // Fetches a display title for a YouTube link via the (CORS-enabled)
         // oEmbed endpoint. Best-effort only — if it fails, the video ID
         // stays as the visible title.
@@ -2498,6 +2569,7 @@
             }
 
             updatePasswordLockIcon();
+            configureMediaSessionActionHandlers();
         }
 
         function updatePasswordLockIcon() {
@@ -2853,6 +2925,18 @@
                 }
             });
         }
+
+        // A single broadcastState() call can quietly get lost — a flaky
+        // mobile connection, a guest's tab being throttled at the exact
+        // instant it arrives, a brief Realtime socket hiccup — and there
+        // was previously nothing to catch that: the host only ever pushed
+        // state on explicit actions. Re-sending the full state on a short
+        // interval means a guest who missed the play/pause/skip event
+        // self-heals within ~15s instead of staying stuck until the next
+        // action, which matters most for backgrounded mobile tabs.
+        setInterval(() => {
+            if (isHost && roomChannel) broadcastState();
+        }, 15000);
 
         function handleIncomingState(payload) {
             if (typeof payload.lobbyName === 'string') {
@@ -3370,6 +3454,8 @@
             requestAnimationFrame(() => setMarqueeAlwaysOn(titleWrapEl));
 
             updateLoopShuffleUI();
+            updateMediaSessionMetadata();
+            updateMediaSessionPlaybackState();
         }
 
         function probeDuration(track) {
