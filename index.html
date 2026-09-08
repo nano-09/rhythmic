@@ -99,9 +99,7 @@
         }
 
         @keyframes marquee-bounce {
-
-            0%,
-            12% {
+            0%, 12% {
                 transform: translateX(0);
             }
 
@@ -109,10 +107,69 @@
                 transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
             }
 
-            88%,
-            100% {
+            88%, 100% {
                 transform: translateX(0);
             }
+        }
+
+        /* Seek/progress bar — a plain gray track with the "played" portion
+           painted white, matching a typical player's progress indicator.
+           The fill itself is a background gradient set from JS (see
+           updateSeekSliderFill()) since <input type=range> has no native
+           two-tone track; this just styles the thumb and the unfilled base. */
+        .seek-slider {
+            background: #4d4d4d;
+        }
+
+        .seek-slider::-webkit-slider-runnable-track {
+            height: 4px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .seek-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffffff;
+            margin-top: -4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        .seek-slider:hover::-webkit-slider-thumb {
+            transform: scale(1.15);
+        }
+
+        .seek-slider:disabled::-webkit-slider-thumb {
+            opacity: 0;
+        }
+
+        .seek-slider::-moz-range-track {
+            height: 4px;
+            border-radius: 999px;
+            background: transparent;
+        }
+
+        .seek-slider::-moz-range-progress {
+            height: 4px;
+            border-radius: 999px;
+            background: #ffffff;
+        }
+
+        .seek-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border: none;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .seek-slider:disabled::-moz-range-thumb {
+            opacity: 0;
         }
     </style>
 </head>
@@ -225,6 +282,75 @@
         </div>
     </div>
 
+    <!-- CREATE ROOM MODAL — asks for the lobby name/password only after the
+         user commits to creating a room, so these fields don't sit next to
+         (and get confused with) the "join with a code" section below. -->
+    <div id="create-room-modal"
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div
+            class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
+            <div class="w-14 h-14 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
+                <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white mb-1" data-i18n="create_room_modal_title">Name Your Room</h2>
+                <p class="text-xs text-[#A7A7A7]" data-i18n="create_room_modal_desc">Give your room a name and, if
+                    you'd like, a password — both optional.</p>
+            </div>
+
+            <div class="space-y-1.5 text-left">
+                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
+                    <span data-i18n="lobby_name_label">Lobby Name</span>
+                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+                <input id="lobby-name-input" type="text" maxlength="40" data-i18n-placeholder="lobby_name_placeholder"
+                    placeholder="e.g. Friday Night Vibes"
+                    class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+            </div>
+
+            <div class="space-y-1.5 text-left">
+                <label for="lobby-password-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
+                    <span data-i18n="lobby_password_label">Room Password</span>
+                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+                <div class="relative">
+                    <input id="lobby-password-input" type="password" maxlength="40"
+                        data-i18n-placeholder="lobby_password_placeholder" placeholder="Leave blank for no password"
+                        class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl pl-3 pr-11 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                    <button type="button" id="lobby-password-toggle-btn" title="Show password"
+                        data-i18n-title="show_password_title"
+                        class="password-toggle-btn absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-[#727272] hover:text-[#D1D1D1] transition-colors rounded-lg">
+                        <svg class="eye-icon-show w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <svg class="eye-icon-hide w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-2.5">
+                <button id="create-room-modal-cancel-btn"
+                    class="flex-1 bg-[#282828] hover:bg-[#3E3E3E] text-white font-semibold py-2.5 px-4 rounded-full transition-all"
+                    data-i18n="cancel_btn">
+                    Cancel
+                </button>
+                <button id="create-room-modal-confirm-btn"
+                    class="flex-1 bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-2.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all"
+                    data-i18n="create_room_btn">
+                    Create New Room
+                </button>
+            </div>
+        </div>
+    </div>
+
     <main class="w-full flex justify-center">
         <div id="nickname-screen"
             class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-5 sm:p-8 space-y-6">
@@ -282,42 +408,6 @@
                 </div>
             </div>
 
-            <div class="space-y-1.5">
-                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
-                    <span data-i18n="lobby_name_label">Lobby Name</span>
-                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
-                <input id="lobby-name-input" type="text" maxlength="40" data-i18n-placeholder="lobby_name_placeholder"
-                    placeholder="e.g. Friday Night Vibes"
-                    class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-            </div>
-
-            <div class="space-y-1.5">
-                <label for="lobby-password-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
-                    <span data-i18n="lobby_password_label">Room Password</span>
-                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
-                <div class="relative">
-                    <input id="lobby-password-input" type="password" maxlength="40"
-                        data-i18n-placeholder="lobby_password_placeholder" placeholder="Leave blank for no password"
-                        class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl pl-3 pr-11 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                    <button type="button" id="lobby-password-toggle-btn" title="Show password"
-                        data-i18n-title="show_password_title"
-                        class="password-toggle-btn absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-[#727272] hover:text-[#D1D1D1] transition-colors rounded-lg">
-                        <svg class="eye-icon-show w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <svg class="eye-icon-hide w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88">
-                            </path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
             <button id="create-room-btn"
                 class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -367,7 +457,8 @@
             </div>
         </div>
 
-        <div id="main-player-card" class="hidden fixed inset-0 z-0 flex flex-col bg-[#0a0a0a] text-[#F5F5F5]">
+        <div id="main-player-card"
+            class="hidden fixed inset-0 z-0 flex flex-col bg-[#0a0a0a] text-[#F5F5F5]">
 
             <!-- TOP BAR -->
             <header
@@ -384,9 +475,7 @@
 
                     <div class="min-w-0">
                         <div class="flex items-center gap-1 min-w-0">
-                            <h2 id="lobby-name-display"
-                                class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">
-                                Lobby</h2>
+                            <h2 id="lobby-name-display" class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">Lobby</h2>
                             <input id="lobby-name-edit-input" type="text" maxlength="40"
                                 class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-sm sm:text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
                             <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
@@ -443,6 +532,17 @@
                         </svg>
                         <span data-i18n="copy_btn">Copy</span>
                     </button>
+
+                    <!-- In-room language switcher. The global #lang-switcher (fixed
+                         top-right, used on the pre-join screens) is hidden while a
+                         room is open so it doesn't overlap this header's own
+                         controls — this is the in-header equivalent. Same .lang-btn
+                         class, so the existing click handlers pick it up too. -->
+                    <div class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
+                        <button data-lang="en" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">EN</button>
+                        <button data-lang="ko" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">한국어</button>
+                        <button data-lang="ja" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">日本語</button>
+                    </div>
                 </div>
             </header>
 
@@ -451,8 +551,7 @@
                 <div class="max-w-5xl mx-auto w-full px-3 sm:px-6 py-5 space-y-5">
 
                     <!-- ADD A TRACK (host only) -->
-                    <div id="host-only-track-input-section"
-                        class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
+                    <div id="host-only-track-input-section" class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
                         <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
                             data-i18n="add_track_heading">Add a Track</h3>
 
@@ -543,7 +642,8 @@
 
                             <div id="add-method-url-panel"
                                 class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
-                                <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
+                                <textarea id="track-url-input" rows="3"
+                                    data-i18n-placeholder="track_url_placeholder"
                                     placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                                     class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
                                 <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
@@ -592,8 +692,7 @@
                         </div>
 
                         <div id="queue-tab-panel">
-                            <div
-                                class="hidden sm:grid grid-cols-[2rem_1fr_4.5rem] gap-2.5 px-3 pb-2 mb-1 text-[10px] uppercase tracking-wider text-[#727272] font-bold border-b border-[#282828]/60">
+                            <div class="hidden sm:grid grid-cols-[2rem_1fr_4.5rem] gap-2.5 px-3 pb-2 mb-1 text-[10px] uppercase tracking-wider text-[#727272] font-bold border-b border-[#282828]/60">
                                 <span>#</span>
                                 <span data-i18n="title_col">Title</span>
                                 <span class="text-right" data-i18n="duration_col">Duration</span>
@@ -615,27 +714,39 @@
             </div>
 
             <!-- BOTTOM PLAYER BAR -->
-            <footer
-                class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
+            <footer class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
                 <audio id="audio-player" class="hidden" controls></audio>
 
                 <div class="max-w-6xl mx-auto flex flex-col gap-1.5">
 
                     <div id="host-controls" class="contents">
                         <div class="flex items-center gap-2">
-                            <span id="current-time"
-                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 text-right flex-shrink-0">00:00</span>
+                            <span id="current-time" class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 text-right flex-shrink-0">00:00</span>
                             <input id="seek-slider" type="range" min="0" max="100" value="0" step="0.1"
-                                class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none disabled:cursor-not-allowed"
+                                class="seek-slider w-full h-1 rounded-lg appearance-none cursor-pointer focus:outline-none disabled:cursor-not-allowed"
                                 disabled />
-                            <span id="total-duration"
-                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 flex-shrink-0">00:00</span>
+                            <span id="total-duration" class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 flex-shrink-0">00:00</span>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-2 sm:gap-4">
+                    <!-- grid-cols-[1fr_auto_1fr]: the two side columns always
+                         stay equal width (unlike flex-grow, which the volume
+                         column's max-width previously threw off), so the
+                         transport buttons in the middle "auto" column are
+                         always dead-center regardless of title length. -->
+                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
                         <!-- NOW PLAYING (left) -->
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div id="current-track-thumb-wrap"
+                                class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828] flex items-center justify-center">
+                                <img id="current-track-thumb" class="hidden w-full h-full object-cover" alt="" />
+                                <svg id="current-track-thumb-fallback" class="w-5 h-5 text-[#727272]" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                                    </path>
+                                </svg>
+                            </div>
                             <div class="min-w-0 flex-1">
                                 <div id="current-track-title-wrap" class="marquee-wrap w-full">
                                     <span id="current-track-title" class="marquee-inner text-sm font-bold text-white"
@@ -655,8 +766,7 @@
                         </div>
 
                         <!-- TRANSPORT (center) -->
-                        <div id="transport-controls"
-                            class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0">
+                        <div id="transport-controls" class="flex items-center justify-center gap-4 sm:gap-5">
                             <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
                                 class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -681,8 +791,7 @@
                                     viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
-                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor"
-                                    viewBox="0 0 24 24">
+                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                 </svg>
                             </button>
@@ -706,8 +815,9 @@
                             </button>
                         </div>
 
-                        <!-- VOLUME (right) -->
-                        <div class="hidden md:flex items-center gap-2 flex-1 justify-end max-w-[180px]">
+                        <!-- VOLUME (right) — column always reserved (for centering);
+                             content itself only shown at md+ so mobile stays clean. -->
+                        <div class="hidden md:flex items-center gap-2 justify-end min-w-0 max-w-[180px] justify-self-end">
                             <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
                                 <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
@@ -828,6 +938,8 @@
                 lobby_password_label: "Room Password",
                 lobby_password_placeholder: "Leave blank for no password",
                 create_room_btn: "Create New Room",
+                create_room_modal_title: "Name Your Room",
+                create_room_modal_desc: "Give your room a name and, if you'd like, a password — both optional.",
                 recent_lobbies: "Your Recent Lobbies",
                 or_join_existing: "or join existing",
                 room_code_label: "Enter 6-Digit Room Code",
@@ -920,6 +1032,8 @@
                 lobby_password_label: "방 비밀번호",
                 lobby_password_placeholder: "비워두면 비밀번호 없음",
                 create_room_btn: "새 방 만들기",
+                create_room_modal_title: "방 이름 정하기",
+                create_room_modal_desc: "방 이름과 (원한다면) 비밀번호를 설정하세요 — 둘 다 선택 사항입니다.",
                 recent_lobbies: "최근 방 목록",
                 or_join_existing: "또는 기존 방 참여하기",
                 room_code_label: "6자리 방 코드 입력",
@@ -1012,6 +1126,8 @@
                 lobby_password_label: "ルームパスワード",
                 lobby_password_placeholder: "空欄でパスワードなし",
                 create_room_btn: "新しいルームを作成",
+                create_room_modal_title: "ルーム名を設定",
+                create_room_modal_desc: "ルーム名とパスワード（任意）を設定してください。どちらも省略できます。",
                 recent_lobbies: "最近のロビー",
                 or_join_existing: "既存のルームに参加",
                 room_code_label: "6桁のルームコードを入力",
@@ -1364,6 +1480,21 @@
                 .catch(() => { });
         }
 
+        // Same idea as fetchYoutubeTitle, but for the track length — a
+        // pasted YouTube URL has no audio <source> to probe via probeDuration(),
+        // so the only way to learn its length is the Data API's contentDetails.
+        function fetchYoutubeDurationForTrack(track) {
+            if (!track.youtubeId) return;
+            fetchYoutubeDurations([track.youtubeId]).then(map => {
+                const seconds = map[track.youtubeId];
+                if (seconds != null && playlist.includes(track)) {
+                    track.duration = seconds;
+                    renderPlaylist();
+                    if (isHost) broadcastState();
+                }
+            });
+        }
+
         // -------------------------------------------------------------
         // YOUTUBE SEARCH (YouTube Data API v3 — lets the host search
         // for a song by name and add it straight to the queue, instead
@@ -1386,6 +1517,51 @@
             const el = document.createElement('textarea');
             el.innerHTML = str || '';
             return el.value;
+        }
+
+        // Converts an ISO 8601 duration ("PT4M13S", "PT1H2M") from the
+        // YouTube Data API's contentDetails into whole seconds.
+        function parseIso8601Duration(iso) {
+            if (!iso) return null;
+            const match = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso);
+            if (!match) return null;
+            const hours = parseInt(match[1] || '0', 10);
+            const minutes = parseInt(match[2] || '0', 10);
+            const seconds = parseInt(match[3] || '0', 10);
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+
+        // The /search endpoint doesn't return video length, so once we have
+        // a batch of video IDs we make one follow-up call to /videos for
+        // their contentDetails.duration. Returns { [videoId]: seconds }.
+        async function fetchYoutubeDurations(videoIds) {
+            if (!videoIds.length) return {};
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
+                const res = await fetch(url);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return {};
+                const map = {};
+                (data.items || []).forEach(item => {
+                    const seconds = parseIso8601Duration(item.contentDetails?.duration);
+                    if (item.id && seconds != null) map[item.id] = seconds;
+                });
+                return map;
+            } catch (err) {
+                console.warn('[SyncBeats] Failed to fetch YouTube durations', err);
+                return {};
+            }
+        }
+
+        // Returns a thumbnail URL for a track if one is available. YouTube
+        // videos always have a predictable thumbnail at this URL pattern;
+        // local uploads / direct audio URLs have no artwork, so return null
+        // and let the caller fall back to a generic icon.
+        function getTrackThumbnailUrl(track) {
+            if (track && track.isYouTube && track.youtubeId) {
+                return `https://i.ytimg.com/vi/${track.youtubeId}/mqdefault.jpg`;
+            }
+            return null;
         }
 
         function setSearchStatus(text, tone) {
@@ -1432,7 +1608,10 @@
                 }
 
                 setSearchStatus(null);
-                renderYoutubeSearchResults(items);
+
+                const videoIds = items.map(item => item.id && item.id.videoId).filter(Boolean);
+                const durations = await fetchYoutubeDurations(videoIds);
+                renderYoutubeSearchResults(items, durations);
             } catch (err) {
                 if (err.name === 'AbortError') return;
                 console.error('[SyncBeats] YouTube search failed', err);
@@ -1442,21 +1621,24 @@
             }
         }
 
-        function renderYoutubeSearchResults(items) {
+        function renderYoutubeSearchResults(items, durations = {}) {
             youtubeSearchResults.innerHTML = items.map(item => {
                 const videoId = item.id && item.id.videoId;
                 if (!videoId) return '';
                 const title = decodeHtmlEntities(item.snippet?.title || '');
                 const channel = decodeHtmlEntities(item.snippet?.channelTitle || '');
                 const thumb = item.snippet?.thumbnails?.default?.url || '';
+                const durationSeconds = durations[videoId];
                 return `
               <button type="button" data-video-id="${videoId}" data-title="${escapeHtml(title)}"
+                  data-duration="${durationSeconds || ''}"
                   class="yt-search-result-item w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#181818] transition-all text-left">
                 <img src="${thumb}" class="w-10 h-10 rounded object-cover flex-shrink-0 bg-[#282828]" loading="lazy" />
                 <div class="min-w-0 flex-1">
                   <p class="text-xs font-medium text-white truncate">${escapeHtml(title)}</p>
                   <p class="text-[10px] text-[#A7A7A7] truncate">${escapeHtml(channel)}</p>
                 </div>
+                ${durationSeconds ? `<span class="text-[10px] font-mono text-[#727272] flex-shrink-0">${formatTime(durationSeconds)}</span>` : ''}
                 <svg class="w-4 h-4 text-[#1DB954] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -1466,12 +1648,17 @@
 
             youtubeSearchResults.querySelectorAll('.yt-search-result-item').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    addYoutubeSearchResultToQueue(btn.getAttribute('data-video-id'), btn.getAttribute('data-title'));
+                    const durationAttr = btn.getAttribute('data-duration');
+                    addYoutubeSearchResultToQueue(
+                        btn.getAttribute('data-video-id'),
+                        btn.getAttribute('data-title'),
+                        durationAttr ? parseInt(durationAttr, 10) : null
+                    );
                 });
             });
         }
 
-        function addYoutubeSearchResultToQueue(videoId, title) {
+        function addYoutubeSearchResultToQueue(videoId, title, durationSeconds) {
             if (!isHost || !videoId) return;
 
             const track = {
@@ -1481,7 +1668,8 @@
                 filePath: null,
                 isLocal: false,
                 isYouTube: true,
-                youtubeId: videoId
+                youtubeId: videoId,
+                duration: durationSeconds || null
             };
 
             playlist.push(track);
@@ -1899,6 +2087,7 @@
             document.getElementById('nickname-screen').classList.add('hidden');
             document.getElementById('room-select-screen').classList.remove('hidden');
             document.getElementById('join-overlay').classList.add('hidden');
+            document.getElementById('lang-switcher')?.classList.remove('hidden');
 
             const participantsContainer = document.getElementById('participants-container');
             if (participantsContainer) participantsContainer.innerHTML = '';
@@ -2092,6 +2281,9 @@
         function startRoomSession() {
             document.getElementById('room-select-screen').classList.add('hidden');
             document.getElementById('main-player-card').classList.remove('hidden');
+            // The header now has its own language switcher, so hide the
+            // fixed top-right one to avoid the two overlapping.
+            document.getElementById('lang-switcher')?.classList.add('hidden');
 
             document.getElementById('active-room-code').innerText = roomId;
 
@@ -2530,6 +2722,18 @@
         // -------------------------------------------------------------
         // AUDIO PLAYER & TIMESTAMP SYNC EVENTS
         // -------------------------------------------------------------
+        // Paints the "played" portion of the seek bar white and the rest
+        // gray via a background gradient — Firefox does this natively with
+        // ::-moz-range-progress, but WebKit browsers have no equivalent, so
+        // this keeps both in sync by just setting it unconditionally.
+        function updateSeekSliderFill() {
+            const min = parseFloat(seekSlider.min) || 0;
+            const max = parseFloat(seekSlider.max) || 100;
+            const pct = max > min ? ((parseFloat(seekSlider.value) - min) / (max - min)) * 100 : 0;
+            const clamped = Math.min(100, Math.max(0, pct));
+            seekSlider.style.background = `linear-gradient(to right, #ffffff ${clamped}%, #4d4d4d ${clamped}%)`;
+        }
+
         function updateSeekUI() {
             if (isSeeking) return;
             const duration = getPlaybackDuration();
@@ -2539,6 +2743,7 @@
                 totalDurationEl.innerText = formatTime(duration);
                 if (isHost) seekSlider.removeAttribute('disabled');
             }
+            updateSeekSliderFill();
         }
 
         audioPlayer.ontimeupdate = () => {
@@ -2596,6 +2801,7 @@
             isSeeking = true;
             const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
             currentTimeEl.innerText = formatTime(seekTime);
+            updateSeekSliderFill();
             seekCurrentTrack(seekTime);
 
             const now = Date.now();
@@ -2609,6 +2815,7 @@
             if (!isHost) return;
             const seekTime = (seekSlider.value / 100) * getPlaybackDuration();
             seekCurrentTrack(seekTime);
+            updateSeekSliderFill();
             isSeeking = false;
             lastScrubBroadcast = Date.now();
             broadcastState();
@@ -2728,6 +2935,7 @@
                         youtubeId: youtubeId
                     };
                     fetchYoutubeTitle(track);
+                    fetchYoutubeDurationForTrack(track);
                 } else {
                     const cleanTitle = url.split('/').pop().split('?')[0] || `Track ${playlist.length + 1}`;
                     track = {
@@ -2915,10 +3123,26 @@
             const statusEl = document.getElementById('player-status-text');
             const playIcon = document.getElementById('play-icon');
             const pauseIcon = document.getElementById('pause-icon');
+            const thumbImg = document.getElementById('current-track-thumb');
+            const thumbFallback = document.getElementById('current-track-thumb-fallback');
 
             if (currentTrackIndex >= 0 && playlist[currentTrackIndex]) {
-                titleEl.innerText = displayTrackTitle(playlist[currentTrackIndex].title);
+                const track = playlist[currentTrackIndex];
+                titleEl.innerText = displayTrackTitle(track.title);
                 statusEl.innerText = isPlaying ? t('playing_sync') : t('paused');
+
+                const thumbUrl = getTrackThumbnailUrl(track);
+                if (thumbImg && thumbFallback) {
+                    if (thumbUrl) {
+                        thumbImg.src = thumbUrl;
+                        thumbImg.classList.remove('hidden');
+                        thumbFallback.classList.add('hidden');
+                    } else {
+                        thumbImg.removeAttribute('src');
+                        thumbImg.classList.add('hidden');
+                        thumbFallback.classList.remove('hidden');
+                    }
+                }
             } else {
                 titleEl.innerText = t('no_track');
                 statusEl.innerText = t('waiting_playback');
@@ -2926,6 +3150,13 @@
                 totalDurationEl.innerText = "00:00";
                 seekSlider.value = 0;
                 seekSlider.setAttribute('disabled', 'true');
+                updateSeekSliderFill();
+
+                if (thumbImg && thumbFallback) {
+                    thumbImg.removeAttribute('src');
+                    thumbImg.classList.add('hidden');
+                    thumbFallback.classList.remove('hidden');
+                }
             }
 
             if (isPlaying) {
@@ -3018,6 +3249,7 @@
             container.innerHTML = playlist.map((track, i) => {
                 const isActive = i === currentTrackIndex;
                 const durationLabel = track.duration ? formatTime(track.duration) : '--:--';
+                const thumbUrl = getTrackThumbnailUrl(track);
 
                 return `
           <li data-index="${i}"
@@ -3031,15 +3263,17 @@
               </span>
             ` : ''}
 
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#1DB954]/20' : 'bg-[#282828]/80'
+            <div class="relative w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 ${isActive ? 'bg-[#1DB954]/20' : 'bg-[#282828]/80'
                     }">
+              ${thumbUrl ? `<img src="${thumbUrl}" alt="" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()" />` : ''}
+              ${thumbUrl && isActive ? `<div class="absolute inset-0 bg-black/50"></div>` : ''}
               ${isActive ? `
-                <span class="flex items-end gap-0.5 h-4">
+                <span class="relative z-10 flex items-end gap-0.5 h-4">
                   <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 60%"></span>
                   <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 100%; animation-delay: .15s"></span>
                   <span class="w-0.5 bg-[#1ED760] rounded-full ${isPlaying ? 'animate-pulse' : ''}" style="height: 40%; animation-delay: .3s"></span>
                 </span>
-              ` : `<span class="text-xs font-mono text-[#727272]">${String(i + 1).padStart(2, '0')}</span>`}
+              ` : (thumbUrl ? '' : `<span class="relative z-10 text-xs font-mono text-[#727272]">${String(i + 1).padStart(2, '0')}</span>`)}
             </div>
 
             <div class="min-w-0 flex-1">
@@ -3303,7 +3537,36 @@
         });
         document.getElementById('change-nickname-btn').addEventListener('click', showNicknameScreen);
         document.getElementById('unlock-btn').addEventListener('click', unlockAudioSession);
-        document.getElementById('create-room-btn').addEventListener('click', createRoomServer);
+        function openCreateRoomModal() {
+            const modal = document.getElementById('create-room-modal');
+            const nameInput = document.getElementById('lobby-name-input');
+            const passwordInput = document.getElementById('lobby-password-input');
+            if (nameInput) nameInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+            modal.classList.remove('hidden');
+            nameInput?.focus();
+        }
+
+        function closeCreateRoomModal() {
+            document.getElementById('create-room-modal').classList.add('hidden');
+        }
+
+        document.getElementById('create-room-btn').addEventListener('click', openCreateRoomModal);
+        document.getElementById('create-room-modal-cancel-btn').addEventListener('click', closeCreateRoomModal);
+        document.getElementById('create-room-modal-confirm-btn').addEventListener('click', () => {
+            closeCreateRoomModal();
+            createRoomServer();
+        });
+        // Enter in either field submits, same as most single-step forms.
+        ['lobby-name-input', 'lobby-password-input'].forEach(id => {
+            document.getElementById(id)?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    closeCreateRoomModal();
+                    createRoomServer();
+                }
+            });
+        });
         document.getElementById('join-room-btn').addEventListener('click', () => joinRoomWithCode());
         document.getElementById('leave-room-btn').addEventListener('click', returnToHomeScreen);
         document.getElementById('save-lobby-btn').addEventListener('click', saveLobbyStateToDB);
