@@ -99,7 +99,9 @@
         }
 
         @keyframes marquee-bounce {
-            0%, 12% {
+
+            0%,
+            12% {
                 transform: translateX(0);
             }
 
@@ -107,7 +109,8 @@
                 transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
             }
 
-            88%, 100% {
+            88%,
+            100% {
                 transform: translateX(0);
             }
         }
@@ -174,7 +177,14 @@
     </style>
 </head>
 
-<body class="bg-black text-[#F5F5F5] min-h-screen flex items-center justify-center p-4">
+<body class="bg-black text-[#F5F5F5] min-h-screen flex items-center justify-center p-4 overflow-x-hidden">
+
+    <!-- Ambient background glow — fills the otherwise-empty black canvas around
+         the centered card on wide viewports without competing with it. -->
+    <div class="fixed -top-56 -left-56 w-[36rem] h-[36rem] bg-[#1DB954]/10 rounded-full blur-[140px] pointer-events-none z-0"
+        aria-hidden="true"></div>
+    <div class="fixed -bottom-56 -right-56 w-[36rem] h-[36rem] bg-[#1DB954]/10 rounded-full blur-[140px] pointer-events-none z-0"
+        aria-hidden="true"></div>
 
     <!-- Hidden YouTube playback engine. Kept as a direct child of <body> —
          never nested inside any element that gets display:none toggled on
@@ -198,16 +208,18 @@
         class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
         <div
             class="bg-[#181818]/90 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
-            <div
-                class="w-16 h-16 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/30">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
-                    </path>
-                </svg>
+            <div class="flex items-center justify-center gap-2.5">
+                <div
+                    class="w-8 h-8 bg-[#1DB954] rounded-xl flex items-center justify-center shadow-lg shadow-[#1DB954]/30 flex-shrink-0">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3">
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold text-white" data-i18n="join_overlay_title">Join Sync Session</h2>
             </div>
             <div>
-                <h2 class="text-xl font-bold text-white mb-1" data-i18n="join_overlay_title">Join Sync Session</h2>
                 <p class="text-xs text-[#A7A7A7]" data-i18n="join_overlay_desc">Click below to enable synchronized audio
                     playback in your browser.</p>
             </div>
@@ -288,31 +300,30 @@
     <div id="create-room-modal"
         class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
         <div
-            class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
-            <div class="w-14 h-14 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
-                <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
+            class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-6 shadow-2xl">
+            <div class="flex items-center justify-center gap-2.5">
+                <div
+                    class="w-8 h-8 bg-[#1DB954] rounded-xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20 flex-shrink-0">
+                    <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-white" data-i18n="create_room_modal_title">Name Your Room</h2>
             </div>
-            <div>
-                <h2 class="text-lg font-bold text-white mb-1" data-i18n="create_room_modal_title">Name Your Room</h2>
-                <p class="text-xs text-[#A7A7A7]" data-i18n="create_room_modal_desc">Give your room a name and, if
-                    you'd like, a password — both optional.</p>
-            </div>
+            <p class="text-xs text-[#A7A7A7] -mt-3" data-i18n="create_room_modal_desc">Give your room a name and, if
+                you'd like, a password — both optional.</p>
 
-            <div class="space-y-1.5 text-left">
-                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
-                    <span data-i18n="lobby_name_label">Lobby Name</span>
-                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+            <div class="space-y-2 text-left">
+                <label for="lobby-name-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
+                    data-i18n="lobby_name_label">Lobby Name</label>
                 <input id="lobby-name-input" type="text" maxlength="40" data-i18n-placeholder="lobby_name_placeholder"
                     placeholder="e.g. Friday Night Vibes"
                     class="w-full bg-[#000000] border border-[#282828] text-center text-sm font-medium rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
             </div>
 
-            <div class="space-y-1.5 text-left">
-                <label for="lobby-password-input" class="block text-xs font-medium text-[#B3B3B3] text-center">
-                    <span data-i18n="lobby_password_label">Room Password</span>
-                    <span class="text-[#727272] font-normal" data-i18n="optional">(optional)</span></label>
+            <div class="space-y-2 text-left">
+                <label for="lobby-password-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
+                    data-i18n="lobby_password_label">Room Password</label>
                 <div class="relative">
                     <input id="lobby-password-input" type="password" maxlength="40"
                         data-i18n-placeholder="lobby_password_placeholder" placeholder="Leave blank for no password"
@@ -336,129 +347,167 @@
                 </div>
             </div>
 
-            <div class="flex gap-2.5">
-                <button id="create-room-modal-cancel-btn"
-                    class="flex-1 bg-[#282828] hover:bg-[#3E3E3E] text-white font-semibold py-2.5 px-4 rounded-full transition-all"
-                    data-i18n="cancel_btn">
-                    Cancel
-                </button>
+            <div class="space-y-2.5 pt-1">
                 <button id="create-room-modal-confirm-btn"
-                    class="flex-1 bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-2.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all"
+                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
                     data-i18n="create_room_btn">
                     Create New Room
+                </button>
+                <button id="create-room-modal-cancel-btn"
+                    class="w-full text-[#A7A7A7] hover:text-white text-sm font-medium py-1.5 transition-colors"
+                    data-i18n="cancel_btn">
+                    Cancel
                 </button>
             </div>
         </div>
     </div>
 
-    <main class="w-full flex justify-center">
-        <div id="nickname-screen"
-            class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-5 sm:p-8 space-y-6">
-            <div class="text-center space-y-2">
+    <main
+        class="relative z-10 w-full max-w-5xl mx-auto flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20 px-4">
+
+        <!-- Brand / value-prop panel — desktop only. Fills the wide empty
+             margin next to the auth card instead of leaving it blank. -->
+        <div class="hidden lg:flex flex-col max-w-sm flex-1 space-y-8">
+            <div class="flex items-center gap-3">
                 <div
-                    class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z">
-                        </path>
-                    </svg>
-                </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
-                <p class="text-xs text-[#A7A7A7]" data-i18n="nick_subtitle">What should we call you?</p>
-            </div>
-
-            <div class="space-y-3">
-                <label for="nickname-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
-                    data-i18n="nick_label">Your
-                    Nickname</label>
-                <input id="nickname-input" type="text" maxlength="20" data-i18n-placeholder="nick_placeholder"
-                    placeholder="e.g. Jamie"
-                    class="w-full bg-[#000000] border border-[#282828] text-center text-lg font-semibold rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                <p id="nickname-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="nick_error">Please
-                    enter a nickname
-                    (2-20 characters).</p>
-            </div>
-
-            <button id="nickname-continue-btn"
-                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                data-i18n="continue_btn">
-                Continue
-            </button>
-        </div>
-
-        <div id="room-select-screen"
-            class="hidden w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-6">
-            <div class="text-center space-y-2">
-                <div
-                    class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-11 h-11 bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20 flex-shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
                         </path>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
-                <p class="text-xs text-[#A7A7A7]" data-i18n="room_subtitle">Listen together in real-time</p>
-                <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#727272] pt-1">
-                    <span><span data-i18n="playing_as">Playing as</span> <span id="display-nickname"
-                            class="text-[#B3B3B3] font-semibold"></span></span>
-                    <button id="change-nickname-btn"
-                        class="text-[#1ED760] hover:text-[#4CD97B] underline underline-offset-2"
-                        data-i18n="change">change</button>
-                </div>
+                <span class="text-xl font-bold text-white tracking-tight">Sync Beats</span>
             </div>
-
-            <button id="create-room-btn"
-                class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <span data-i18n="create_room_btn">Create New Room</span>
-            </button>
-
-            <div id="saved-lobbies-section" class="space-y-2.5 pt-2 hidden">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-[#A7A7A7] uppercase tracking-wider"
-                        data-i18n="recent_lobbies">Your Recent Lobbies</span>
-                    <span id="saved-lobbies-count"
-                        class="text-[10px] font-semibold text-[#727272] bg-[#282828] px-2 py-0.5 rounded-full">0</span>
-                </div>
-                <div id="saved-lobbies-list" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
-            </div>
-
-            <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-[#282828]"></div>
-                <span class="flex-shrink mx-4 text-[10px] text-[#727272] font-bold uppercase tracking-widest"
-                    data-i18n="or_join_existing">or join
-                    existing</span>
-                <div class="flex-grow border-t border-[#282828]"></div>
-            </div>
-
             <div class="space-y-3">
-                <label for="room-code-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
-                    data-i18n="room_code_label">Enter 6-Digit
-                    Room Code</label>
-                <div class="flex gap-2.5">
-                    <input id="room-code-input" type="text" maxlength="6" placeholder="839201"
-                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-center font-mono text-lg font-semibold tracking-widest uppercase rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
-                    <button id="join-room-btn"
-                        class="bg-[#282828] hover:bg-[#3E3E3E] active:bg-[#282828] text-white font-semibold px-6 py-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 flex items-center justify-center gap-2 flex-shrink-0 whitespace-nowrap">
-                        <span data-i18n="join_btn">Join</span>
-                        <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
+                <h2 class="text-4xl font-bold text-white leading-tight tracking-tight" data-i18n="hero_headline">
+                    Press play together, wherever you are.</h2>
+                <p class="text-sm text-[#A7A7A7] leading-relaxed" data-i18n="hero_subtext">Create a room, share the
+                    code, and everyone hears the exact same beat — perfectly in sync.</p>
+            </div>
+            <ul class="space-y-3.5 text-sm text-[#B3B3B3]">
+                <li class="flex items-center gap-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#1DB954] flex-shrink-0"></span>
+                    <span data-i18n="hero_point_1">Playback stays synced across every listener</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#1DB954] flex-shrink-0"></span>
+                    <span data-i18n="hero_point_2">Add tracks by search, YouTube link, or upload</span>
+                </li>
+                <li class="flex items-center gap-3">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#1DB954] flex-shrink-0"></span>
+                    <span data-i18n="hero_point_3">Share a 6-digit code — no accounts needed</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="w-full max-w-md flex-shrink-0">
+            <div id="nickname-screen"
+                class="w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-5 sm:p-8 space-y-6">
+                <div class="text-center space-y-2">
+                    <div
+                        class="w-12 h-12 mx-auto bg-[#1DB954] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z">
+                            </path>
                         </svg>
-                    </button>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
+                    <p class="text-xs text-[#A7A7A7]" data-i18n="nick_subtitle">What should we call you?</p>
                 </div>
-                <p id="room-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="room_error">Please
-                    enter a valid room code.
-                </p>
+
+                <div class="space-y-3">
+                    <label for="nickname-input" class="block text-xs font-medium text-[#B3B3B3] text-center"
+                        data-i18n="nick_label">Your
+                        Nickname</label>
+                    <input id="nickname-input" type="text" maxlength="20" data-i18n-placeholder="nick_placeholder"
+                        placeholder="e.g. Jamie"
+                        class="w-full bg-[#000000] border border-[#282828] text-center text-lg font-semibold rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                    <p id="nickname-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="nick_error">
+                        Please
+                        enter a nickname
+                        (2-20 characters).</p>
+                </div>
+
+                <button id="nickname-continue-btn"
+                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    data-i18n="continue_btn">
+                    Continue
+                </button>
+            </div>
+
+            <div id="room-select-screen"
+                class="hidden w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-8">
+                <div class="text-center space-y-1.5">
+                    <div class="flex items-center justify-center gap-2">
+                        <div
+                            class="w-8 h-8 bg-[#1DB954] rounded-xl flex items-center justify-center shadow-lg shadow-[#1DB954]/20 flex-shrink-0">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+                                </path>
+                            </svg>
+                        </div>
+                        <h1 class="text-2xl font-bold text-white tracking-tight">Sync Beats</h1>
+                    </div>
+                    <p class="text-xs text-[#A7A7A7]" data-i18n="room_subtitle">Listen together in real-time</p>
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] text-[#727272] pt-2">
+                        <span><span data-i18n="playing_as">Playing as</span> <span id="display-nickname"
+                                class="text-[#B3B3B3] font-semibold"></span></span>
+                        <button id="change-nickname-btn"
+                            class="text-[#1ED760] hover:text-[#4CD97B] underline underline-offset-2"
+                            data-i18n="change">change</button>
+                    </div>
+                </div>
+
+                <button id="create-room-btn"
+                    class="w-full bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold py-3.5 px-4 rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span data-i18n="create_room_btn">Create New Room</span>
+                </button>
+
+                <div id="saved-lobbies-section" class="space-y-2.5 hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-[#A7A7A7] uppercase tracking-wider"
+                            data-i18n="recent_lobbies">Your Recent Lobbies</span>
+                        <span id="saved-lobbies-count"
+                            class="text-[10px] font-semibold text-[#727272] bg-[#282828] px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="saved-lobbies-list" class="space-y-2 max-h-36 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="relative flex items-center">
+                        <div class="flex-grow border-t border-[#282828]"></div>
+                        <span class="flex-shrink mx-4 text-[10px] text-[#727272] font-bold uppercase tracking-widest"
+                            data-i18n="or_join_existing">or join
+                            existing</span>
+                        <div class="flex-grow border-t border-[#282828]"></div>
+                    </div>
+                    <div class="flex gap-2.5">
+                        <input id="room-code-input" type="text" maxlength="6" placeholder="839201"
+                            class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-center font-mono text-lg font-semibold tracking-widest uppercase rounded-2xl px-3 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                        <button id="join-room-btn"
+                            class="bg-[#282828] hover:bg-[#3E3E3E] active:bg-[#282828] text-white font-semibold px-6 py-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 flex items-center justify-center gap-2 flex-shrink-0 whitespace-nowrap">
+                            <span data-i18n="join_btn">Join</span>
+                            <svg class="w-4 h-4 text-[#1ED760] flex-shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <p id="room-error-msg" class="text-xs text-red-400 text-center hidden" data-i18n="room_error">Please
+                        enter a valid room code.
+                    </p>
+                </div>
             </div>
         </div>
 
-        <div id="main-player-card"
-            class="hidden fixed inset-0 z-0 flex flex-col bg-[#0a0a0a] text-[#F5F5F5]">
+        <div id="main-player-card" class="hidden fixed inset-0 z-0 flex flex-col bg-[#0a0a0a] text-[#F5F5F5]">
 
             <!-- TOP BAR -->
             <header
@@ -475,7 +524,9 @@
 
                     <div class="min-w-0">
                         <div class="flex items-center gap-1 min-w-0">
-                            <h2 id="lobby-name-display" class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">Lobby</h2>
+                            <h2 id="lobby-name-display"
+                                class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">
+                                Lobby</h2>
                             <input id="lobby-name-edit-input" type="text" maxlength="40"
                                 class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-sm sm:text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
                             <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
@@ -538,10 +589,14 @@
                          room is open so it doesn't overlap this header's own
                          controls — this is the in-header equivalent. Same .lang-btn
                          class, so the existing click handlers pick it up too. -->
-                    <div class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
-                        <button data-lang="en" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">EN</button>
-                        <button data-lang="ko" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">한국어</button>
-                        <button data-lang="ja" class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">日本語</button>
+                    <div
+                        class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
+                        <button data-lang="en"
+                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">EN</button>
+                        <button data-lang="ko"
+                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">한국어</button>
+                        <button data-lang="ja"
+                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">日本語</button>
                     </div>
                 </div>
             </header>
@@ -551,7 +606,8 @@
                 <div class="max-w-5xl mx-auto w-full px-3 sm:px-6 py-5 space-y-5">
 
                     <!-- ADD A TRACK (host only) -->
-                    <div id="host-only-track-input-section" class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
+                    <div id="host-only-track-input-section"
+                        class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
                         <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
                             data-i18n="add_track_heading">Add a Track</h3>
 
@@ -642,8 +698,7 @@
 
                             <div id="add-method-url-panel"
                                 class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
-                                <textarea id="track-url-input" rows="3"
-                                    data-i18n-placeholder="track_url_placeholder"
+                                <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
                                     placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                                     class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
                                 <p class="text-[10px] text-[#727272]" data-i18n="one_per_line">One URL per line</p>
@@ -692,7 +747,8 @@
                         </div>
 
                         <div id="queue-tab-panel">
-                            <div class="hidden sm:grid grid-cols-[2rem_1fr_4.5rem] gap-2.5 px-3 pb-2 mb-1 text-[10px] uppercase tracking-wider text-[#727272] font-bold border-b border-[#282828]/60">
+                            <div
+                                class="hidden sm:grid grid-cols-[2rem_1fr_4.5rem] gap-2.5 px-3 pb-2 mb-1 text-[10px] uppercase tracking-wider text-[#727272] font-bold border-b border-[#282828]/60">
                                 <span>#</span>
                                 <span data-i18n="title_col">Title</span>
                                 <span class="text-right" data-i18n="duration_col">Duration</span>
@@ -714,18 +770,21 @@
             </div>
 
             <!-- BOTTOM PLAYER BAR -->
-            <footer class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
+            <footer
+                class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
                 <audio id="audio-player" class="hidden" controls></audio>
 
                 <div class="max-w-6xl mx-auto flex flex-col gap-1.5">
 
                     <div id="host-controls" class="contents">
                         <div class="flex items-center gap-2">
-                            <span id="current-time" class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 text-right flex-shrink-0">00:00</span>
+                            <span id="current-time"
+                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 text-right flex-shrink-0">00:00</span>
                             <input id="seek-slider" type="range" min="0" max="100" value="0" step="0.1"
                                 class="seek-slider w-full h-1 rounded-lg appearance-none cursor-pointer focus:outline-none disabled:cursor-not-allowed"
                                 disabled />
-                            <span id="total-duration" class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 flex-shrink-0">00:00</span>
+                            <span id="total-duration"
+                                class="text-[10px] font-mono font-medium text-[#A7A7A7] w-9 flex-shrink-0">00:00</span>
                         </div>
                     </div>
 
@@ -791,7 +850,8 @@
                                     viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
-                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor" viewBox="0 0 24 24">
+                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                 </svg>
                             </button>
@@ -817,7 +877,8 @@
 
                         <!-- VOLUME (right) — column always reserved (for centering);
                              content itself only shown at md+ so mobile stays clean. -->
-                        <div class="hidden md:flex items-center gap-2 justify-end min-w-0 max-w-[180px] justify-self-end">
+                        <div
+                            class="hidden md:flex items-center gap-2 justify-end min-w-0 max-w-[180px] justify-self-end">
                             <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
                                 <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
@@ -834,7 +895,7 @@
                             </button>
                             <input id="volume-slider" type="range" min="0" max="100" value="100" step="1"
                                 title="Your volume (only affects your device)" data-i18n-title="volume_title"
-                                class="w-full h-1.5 bg-[#282828] rounded-lg appearance-none cursor-pointer accent-[#1DB954] focus:outline-none" />
+                                class="seek-slider w-full h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none" />
                             <span id="volume-value"
                                 class="text-[10px] font-mono text-[#727272] w-7 text-right flex-shrink-0">100</span>
                         </div>
@@ -893,6 +954,7 @@
         //   create policy "public read lobbies" on public.lobbies for select using (true);
         //   create policy "public write lobbies" on public.lobbies for insert with check (true);
         //   create policy "public update lobbies" on public.lobbies for update using (true);
+        //   create policy "public delete lobbies" on public.lobbies for delete using (true);
         //   create policy "public read members" on public.lobby_members for select using (true);
         //   create policy "public write members" on public.lobby_members for insert with check (true);
         //   create policy "public update members" on public.lobby_members for update using (true);
@@ -930,6 +992,11 @@
                 nick_error: "Please enter a nickname (2-20 characters).",
                 continue_btn: "Continue",
                 room_subtitle: "Listen together in real-time",
+                hero_headline: "Press play together, wherever you are.",
+                hero_subtext: "Create a room, share the code, and everyone hears the exact same beat — perfectly in sync.",
+                hero_point_1: "Playback stays synced across every listener",
+                hero_point_2: "Add tracks by search, YouTube link, or upload",
+                hero_point_3: "Share a 6-digit code — no accounts needed",
                 playing_as: "Playing as",
                 change: "change",
                 lobby_name_label: "Lobby Name",
@@ -946,6 +1013,7 @@
                 join_btn: "Join",
                 room_error: "Please enter a valid room code.",
                 rejoin_btn: "Rejoin",
+                delete_lobby_confirm: "Delete this room for everyone? This can't be undone.",
                 host_tag: "Host",
                 guest_tag: "Guest",
                 track_count: "{n} track(s)",
@@ -1024,6 +1092,11 @@
                 nick_error: "닉네임을 입력해주세요 (2-20자).",
                 continue_btn: "계속하기",
                 room_subtitle: "실시간으로 함께 음악을 들어보세요",
+                hero_headline: "언제 어디서든, 함께 재생하세요.",
+                hero_subtext: "방을 만들고 코드를 공유하면, 모두가 완벽하게 동기화된 음악을 들을 수 있어요.",
+                hero_point_1: "모든 참가자의 재생이 항상 동기화됩니다",
+                hero_point_2: "검색, 유튜브 링크, 업로드로 트랙을 추가하세요",
+                hero_point_3: "6자리 코드만 공유하면 끝 — 계정 불필요",
                 playing_as: "현재 닉네임:",
                 change: "변경",
                 lobby_name_label: "로비 이름",
@@ -1040,6 +1113,7 @@
                 join_btn: "참여하기",
                 room_error: "올바른 방 코드를 입력해주세요.",
                 rejoin_btn: "재입장",
+                delete_lobby_confirm: "이 방을 모두에게서 삭제할까요? 되돌릴 수 없습니다.",
                 host_tag: "호스트",
                 guest_tag: "게스트",
                 track_count: "{n}곡",
@@ -1118,6 +1192,11 @@
                 nick_error: "ニックネームを入力してください（2〜20文字）。",
                 continue_btn: "続ける",
                 room_subtitle: "リアルタイムで一緒に音楽を聴こう",
+                hero_headline: "どこにいても、一緒に再生しよう。",
+                hero_subtext: "ルームを作ってコードを共有すれば、みんなが同じ曲を完璧に同期して聴けます。",
+                hero_point_1: "再生はすべてのリスナー間で常に同期",
+                hero_point_2: "検索・YouTubeリンク・アップロードで曲を追加",
+                hero_point_3: "6桁のコードを共有するだけ — アカウント不要",
                 playing_as: "現在のニックネーム:",
                 change: "変更",
                 lobby_name_label: "ロビー名",
@@ -1127,13 +1206,14 @@
                 lobby_password_placeholder: "空欄でパスワードなし",
                 create_room_btn: "新しいルームを作成",
                 create_room_modal_title: "ルーム名を設定",
-                create_room_modal_desc: "ルーム名とパスワード（任意）を設定してください。どちらも省略できます。",
+                create_room_modal_desc: "ルーム名とパスワード（任意）を設定してください。",
                 recent_lobbies: "最近のロビー",
                 or_join_existing: "既存のルームに参加",
                 room_code_label: "6桁のルームコードを入力",
                 join_btn: "参加する",
                 room_error: "有効なルームコードを入力してください。",
                 rejoin_btn: "再入室",
+                delete_lobby_confirm: "このルームを全員分削除しますか？元に戻せません。",
                 host_tag: "ホスト",
                 guest_tag: "ゲスト",
                 track_count: "{n}曲",
@@ -1841,6 +1921,7 @@
 
             if (volumeSlider && updateSlider) volumeSlider.value = String(clamped);
             if (volumeValueEl) volumeValueEl.innerText = String(clamped);
+            updateVolumeSliderFill();
 
             if (volumeIconHigh && volumeIconMuted) {
                 volumeIconHigh.classList.toggle('hidden', clamped === 0);
@@ -1988,6 +2069,32 @@
             if (error) console.error('Could not remove saved lobby entry:', error.message);
         }
 
+        // Fully removes a hosted room from the database: the lobby row itself
+        // plus every member's membership row for it (not just the host's own),
+        // so the room doesn't linger as an orphaned row other people could
+        // still see or join after the host deleted it.
+        async function deleteLobbyCompletely(code) {
+            if (!supabaseClient) return;
+
+            const { error: membersError } = await supabaseClient
+                .from(MEMBERS_TABLE)
+                .delete()
+                .eq('room_id', code);
+            if (membersError) console.error('Could not remove lobby members:', membersError.message);
+
+            const { error: lobbyError } = await supabaseClient
+                .from(LOBBIES_TABLE)
+                .delete()
+                .eq('room_id', code);
+            if (lobbyError) console.error('Could not remove lobby:', lobbyError.message);
+
+            // If the room being deleted is the one currently open, kick back
+            // to the home screen rather than leaving a dead session on screen.
+            if (roomId === code) {
+                returnToHomeScreen();
+            }
+        }
+
         async function renderSavedLobbiesList() {
             const listEl = document.getElementById('saved-lobbies-list');
             const containerEl = document.getElementById('saved-lobbies-section');
@@ -2009,24 +2116,23 @@
                 const trackCount = item.track_count || 0;
 
                 return `
-          <div class="flex items-center justify-between p-2.5 bg-[#000000]/70 border border-[#282828] rounded-xl text-xs">
-            <div class="min-w-0 flex-1 flex items-center gap-2">
-              <div class="min-w-0">
-                <p class="truncate font-semibold text-[#D1D1D1]">${displayName}</p>
-                <div class="flex items-center gap-1.5 mt-0.5">
-                  <span class="font-mono text-[10px] text-[#1ED760]">${escapeHtml(item.room_id)}</span>
-                  <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold ${isHostRole ? 'bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}">
-                    ${isHostRole ? t('host_tag') : t('guest_tag')}
-                  </span>
-                  <span class="text-[10px] text-[#727272]">(${t('track_count', { n: trackCount })})</span>
-                </div>
-              </div>
+          <div class="flex items-center justify-between px-3 py-2.5 bg-[#000000]/70 border border-[#282828] rounded-xl">
+            <div class="min-w-0">
+              <p class="truncate text-xs font-semibold text-[#D1D1D1]">${displayName}</p>
+              <p class="text-[10px] text-[#727272] mt-0.5 truncate">
+                <span class="font-mono text-[#1ED760]">${escapeHtml(item.room_id)}</span>
+                <span class="mx-1 text-[#3E3E3E]">&middot;</span>
+                <span class="${isHostRole ? 'text-[#4CD97B]' : 'text-blue-300'}">${isHostRole ? t('host_tag') : t('guest_tag')}</span>
+                <span class="mx-1 text-[#3E3E3E]">&middot;</span>
+                ${t('track_count', { n: trackCount })}
+              </p>
             </div>
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-              <button data-rejoin="${escapeHtml(item.room_id)}" class="rejoin-btn bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-[11px] font-bold px-2.5 py-1 rounded-full transition-all">
+            <div class="flex items-center gap-1 flex-shrink-0 ml-2">
+              <button data-rejoin="${escapeHtml(item.room_id)}" class="rejoin-btn bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black text-[11px] font-bold px-3 py-1.5 rounded-full transition-all">
                 ${t('rejoin_btn')}
               </button>
-              <button data-delete="${escapeHtml(item.room_id)}" class="delete-lobby-btn text-[#727272] hover:text-red-400 p-1 rounded-lg">
+              <button data-delete="${escapeHtml(item.room_id)}" data-host="${isHostRole ? '1' : '0'}"
+                class="delete-lobby-btn text-[#535353] hover:text-red-400 p-1.5 rounded-lg transition-colors">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
               </button>
             </div>
@@ -2045,7 +2151,17 @@
             listEl.querySelectorAll('.delete-lobby-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const code = e.currentTarget.getAttribute('data-delete');
-                    await deleteMembershipRow(code);
+                    const isHost = e.currentTarget.getAttribute('data-host') === '1';
+
+                    if (isHost) {
+                        // Deleting your own hosted lobby removes the room for
+                        // everyone, not just your local shortcut to it — confirm
+                        // first since this can't be undone.
+                        if (!window.confirm(t('delete_lobby_confirm'))) return;
+                        await deleteLobbyCompletely(code);
+                    } else {
+                        await deleteMembershipRow(code);
+                    }
                     renderSavedLobbiesList();
                 });
             });
@@ -2726,12 +2842,20 @@
         // gray via a background gradient — Firefox does this natively with
         // ::-moz-range-progress, but WebKit browsers have no equivalent, so
         // this keeps both in sync by just setting it unconditionally.
-        function updateSeekSliderFill() {
-            const min = parseFloat(seekSlider.min) || 0;
-            const max = parseFloat(seekSlider.max) || 100;
-            const pct = max > min ? ((parseFloat(seekSlider.value) - min) / (max - min)) * 100 : 0;
+        function updateRangeSliderFill(slider) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const pct = max > min ? ((parseFloat(slider.value) - min) / (max - min)) * 100 : 0;
             const clamped = Math.min(100, Math.max(0, pct));
-            seekSlider.style.background = `linear-gradient(to right, #ffffff ${clamped}%, #4d4d4d ${clamped}%)`;
+            slider.style.background = `linear-gradient(to right, #ffffff ${clamped}%, #4d4d4d ${clamped}%)`;
+        }
+
+        function updateSeekSliderFill() {
+            updateRangeSliderFill(seekSlider);
+        }
+
+        function updateVolumeSliderFill() {
+            if (volumeSlider) updateRangeSliderFill(volumeSlider);
         }
 
         function updateSeekUI() {
