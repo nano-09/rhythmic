@@ -788,14 +788,17 @@
                         </div>
                     </div>
 
-                    <!-- grid-cols-[1fr_auto_1fr]: the two side columns always
-                         stay equal width (unlike flex-grow, which the volume
-                         column's max-width previously threw off), so the
-                         transport buttons in the middle "auto" column are
-                         always dead-center regardless of title length. -->
-                    <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+                    <!-- Mobile: a plain flex row so the transport buttons sit
+                         flush right and the "now playing" block gets to claim
+                         all the remaining space for the title. Desktop: the
+                         original grid-cols-[1fr_auto_1fr] — the two side
+                         columns stay equal width (unlike flex-grow, which the
+                         volume column's max-width previously threw off), so
+                         the transport buttons are always dead-center
+                         regardless of title length. -->
+                    <div class="flex sm:grid sm:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
                         <!-- NOW PLAYING (left) -->
-                        <div class="flex items-center gap-3 min-w-0">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
                             <div id="current-track-thumb-wrap"
                                 class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828] flex items-center justify-center">
                                 <img id="current-track-thumb" class="hidden w-full h-full object-cover" alt="" />
@@ -824,8 +827,9 @@
                             </div>
                         </div>
 
-                        <!-- TRANSPORT (center) -->
-                        <div id="transport-controls" class="flex items-center justify-center gap-4 sm:gap-5">
+                        <!-- TRANSPORT (right on mobile, center on sm+) -->
+                        <div id="transport-controls"
+                            class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0">
                             <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
                                 class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
