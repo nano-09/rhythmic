@@ -95,21 +95,29 @@
         }
 
         .marquee-wrap.marquee-active .marquee-inner {
-            animation: marquee-bounce var(--marquee-duration, 6s) ease-in-out infinite;
+            animation: marquee-scroll var(--marquee-duration, 6s) linear infinite;
         }
 
-        @keyframes marquee-bounce {
+        /* Continuous left scroll: glide from start to end, hold briefly once
+           fully scrolled, then snap back to the start and hold briefly there
+           before scrolling again — a ticker-style loop rather than a
+           back-and-forth bounce. */
+        @keyframes marquee-scroll {
 
             0%,
-            12% {
+            8% {
                 transform: translateX(0);
             }
 
-            50% {
+            72% {
                 transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
             }
 
-            88%,
+            88% {
+                transform: translateX(calc(-1 * var(--marquee-distance, 0px)));
+            }
+
+            88.01%,
             100% {
                 transform: translateX(0);
             }
@@ -511,35 +519,40 @@
 
             <!-- TOP BAR -->
             <header
-                class="flex-shrink-0 flex flex-wrap items-center gap-x-3 gap-y-2 justify-between px-3 sm:px-6 py-2.5 border-b border-[#282828]/80 bg-[#000000]/50 backdrop-blur-xl">
-                <div class="flex items-center gap-2 min-w-0">
+                class="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b border-[#282828]/80 bg-[#000000]/50 backdrop-blur-xl">
+                <div class="flex items-center gap-3 min-w-0">
                     <button id="leave-room-btn" title="Return to Lobby Select" data-i18n-title="leave_room_title"
-                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
                             </path>
                         </svg>
                     </button>
 
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1 min-w-0">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 min-w-0">
                             <h2 id="lobby-name-display"
-                                class="text-sm sm:text-base font-bold text-white truncate max-w-[36vw] sm:max-w-xs">
+                                class="text-base sm:text-lg font-bold text-white truncate min-w-0 flex-shrink">
                                 Lobby</h2>
                             <input id="lobby-name-edit-input" type="text" maxlength="40"
-                                class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-sm sm:text-base font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
+                                class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-base sm:text-lg font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
+                            <span id="role-badge"
+                                class="flex-shrink-0 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
+                                data-i18n="connecting">
+                                Connecting...
+                            </span>
                             <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
-                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-2 rounded-lg transition-all active:scale-95">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                     </path>
                                 </svg>
                             </button>
                             <button id="set-password-btn" title="Set Room Password" data-i18n-title="set_password_title"
-                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 rounded-lg transition-all active:scale-95">
-                                <svg id="password-lock-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-2 rounded-lg transition-all active:scale-95">
+                                <svg id="password-lock-icon" class="w-4 h-4" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
@@ -547,18 +560,17 @@
                                 </svg>
                             </button>
                         </div>
-                        <span id="role-badge"
-                            class="inline-block mt-0.5 px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
-                            data-i18n="connecting">
-                            Connecting...
-                        </span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 flex-wrap justify-end">
+                <!-- Secondary actions — wraps onto additional rows on narrow
+                     screens instead of scrolling off-screen, so every pill
+                     (including the language switcher) stays visible without
+                     a hidden horizontal swipe. Right-aligned from sm+. -->
+                <div class="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                     <button id="save-lobby-btn" title="Save Lobby State"
-                        class="hidden bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1 active:scale-95">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="hidden bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 px-3 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
                             </path>
@@ -567,16 +579,16 @@
                     </button>
 
                     <div
-                        class="bg-[#000000] border border-[#282828] px-3 py-1.5 rounded-full flex items-center gap-2 flex-shrink-0">
+                        class="bg-[#000000] border border-[#282828] px-3.5 py-2 rounded-full flex items-center gap-2 flex-shrink-0">
                         <span class="text-[10px] text-[#727272] uppercase font-bold tracking-wider whitespace-nowrap"
                             data-i18n="code_label">Code:</span>
                         <span id="active-room-code"
-                            class="text-xs font-mono font-bold text-[#1ED760] tracking-wider whitespace-nowrap">------</span>
+                            class="text-xs sm:text-sm font-mono font-bold text-[#1ED760] tracking-wider whitespace-nowrap">------</span>
                     </div>
 
                     <button id="copy-link-btn"
-                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-3.5 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
                             </path>
@@ -592,11 +604,11 @@
                     <div
                         class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
                         <button data-lang="en"
-                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">EN</button>
+                            class="lang-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all">EN</button>
                         <button data-lang="ko"
-                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">한국어</button>
+                            class="lang-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all">한국어</button>
                         <button data-lang="ja"
-                            class="lang-btn px-2 py-1 rounded-full text-[10px] font-bold transition-all">日本語</button>
+                            class="lang-btn px-2.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all">日本語</button>
                     </div>
                 </div>
             </header>
@@ -2456,7 +2468,7 @@
 
             if (isHost) {
                 badge.innerText = t('host_badge');
-                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30';
+                badge.className = 'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#1DB954]/20 text-[#4CD97B] border border-[#1DB954]/30 whitespace-nowrap';
                 saveBtn.classList.remove('hidden');
                 editNameBtn?.classList.remove('hidden');
                 setPasswordBtn?.classList.remove('hidden');
@@ -2470,7 +2482,7 @@
                 });
             } else {
                 badge.innerText = t('guest_badge');
-                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30';
+                badge.className = 'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 whitespace-nowrap';
                 saveBtn.classList.add('hidden');
                 editNameBtn?.classList.add('hidden');
                 setPasswordBtn?.classList.add('hidden');
