@@ -1367,6 +1367,15 @@
         let roomPassword = null; // null/'' = no password
         let joinedAt = null;
 
+        // Estimated offset (ms) between the host's system clock and this
+        // device's, i.e. hostClockNow ≈ Date.now() + hostClockOffsetMs.
+        // Guests use this to correct for clock skew when compensating for
+        // network latency in handleIncomingState() — without it, two devices
+        // whose clocks disagree by even a few seconds cause playback to jump
+        // the wrong way (usually backwards) every time the host hits play.
+        let hostClockOffsetMs = 0;
+        let clockSyncIntervalId = null;
+
         let playlist = [];
         let currentTrackIndex = -1;
         let isPlaying = false;
@@ -2185,6 +2194,10 @@
                 roomChannel = null;
             }
 
+            clearInterval(clockSyncIntervalId);
+            clockSyncIntervalId = null;
+            hostClockOffsetMs = 0;
+
             roomId = null;
             isHost = false;
             joinedAt = null;
@@ -2634,6 +2647,22 @@
                     if (isHost) broadcastState();
                 })
                 .on('broadcast', { event: 'transfer-host' }, ({ payload }) => handleHostTransfer(payload))
+                .on('broadcast', { event: 'clock-ping' }, ({ payload }) => {
+                    if (!isHost || !payload) return;
+                    roomChannel.send({
+                        type: 'broadcast',
+                        event: 'clock-pong',
+                        payload: { requesterId: payload.requesterId, t0: payload.t0, t1: Date.now() }
+                    });
+                })
+                .on('broadcast', { event: 'clock-pong' }, ({ payload }) => {
+                    if (isHost || !payload || payload.requesterId !== clientId) return;
+                    const t2 = Date.now();
+                    // Classic NTP-style offset estimate: assumes the ping and
+                    // pong legs took roughly equal time, so the host's clock
+                    // at the midpoint of the round trip equals t1.
+                    hostClockOffsetMs = payload.t1 - (payload.t0 + t2) / 2;
+                })
                 .on('presence', { event: 'sync' }, () => {
                     renderParticipants(roomChannel.presenceState());
                 })
@@ -2644,9 +2673,23 @@
 
                         if (!isHost) {
                             roomChannel.send({ type: 'broadcast', event: 'request-state', payload: {} });
+                            syncClockWithHost();
+                            // Clock drift is usually slow, but re-measure every
+                            // 20s so a long session doesn't gradually re-drift.
+                            clearInterval(clockSyncIntervalId);
+                            clockSyncIntervalId = setInterval(syncClockWithHost, 20000);
                         }
                     }
                 });
+        }
+
+        function syncClockWithHost() {
+            if (!roomChannel || isHost) return;
+            roomChannel.send({
+                type: 'broadcast',
+                event: 'clock-ping',
+                payload: { requesterId: clientId, t0: Date.now() }
+            });
         }
 
         // -------------------------------------------------------------
@@ -2737,6 +2780,9 @@
             renderPlaylist();
             roomChannel.track({ clientId, nickname, isHost, joinedAt });
             saveMembershipSnapshot();
+            clearInterval(clockSyncIntervalId);
+            clockSyncIntervalId = setInterval(syncClockWithHost, 20000);
+            syncClockWithHost();
 
             if (supabaseClient && roomId) {
                 const { error } = await supabaseClient
@@ -2752,8 +2798,13 @@
 
             if (payload.newHostId === clientId) {
                 isHost = true;
+                clearInterval(clockSyncIntervalId);
+                hostClockOffsetMs = 0;
             } else if (payload.oldHostId === clientId) {
                 isHost = false;
+                clearInterval(clockSyncIntervalId);
+                clockSyncIntervalId = setInterval(syncClockWithHost, 20000);
+                syncClockWithHost();
             } else {
                 return;
             }
@@ -2803,7 +2854,11 @@
 
             if (currentTrackIndex >= 0 && playlist[currentTrackIndex] && playlist[currentTrackIndex].url) {
                 const targetTrack = playlist[currentTrackIndex];
-                const latency = (Date.now() - payload.timestamp) / 1000;
+                // Correct for clock skew between the host's device and this
+                // one before estimating how much time has passed since the
+                // host sent this update — see hostClockOffsetMs above.
+                const correctedNow = Date.now() + hostClockOffsetMs;
+                const latency = Math.max(0, (correctedNow - payload.timestamp) / 1000);
                 const targetTime = payload.currentTime + (isPlaying ? latency : 0);
 
                 if (targetTrack.isYouTube) {
