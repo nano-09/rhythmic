@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sync Beats</title>
     <link rel="icon" href="data:,">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d0d0d">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sync Beats">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"
@@ -542,6 +549,12 @@
                                 data-i18n="connecting">
                                 Connecting...
                             </span>
+                            <span id="offline-badge" title="No internet connection — sync is paused and only downloaded tracks will play."
+                                data-i18n-title="offline_title"
+                                class="hidden flex-shrink-0 items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>
+                                <span id="offline-badge-text">Offline</span>
+                            </span>
                             <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
                                 class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 sm:p-2 rounded-lg transition-all active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,17 +814,18 @@
                         </div>
                     </div>
 
-                    <!-- Mobile: a plain flex row so the transport buttons sit
-                         flush right and the "now playing" block gets to claim
-                         all the remaining space for the title. Desktop: the
-                         original grid-cols-[1fr_auto_1fr] — the two side
-                         columns stay equal width (unlike flex-grow, which the
-                         volume column's max-width previously threw off), so
-                         the transport buttons are always dead-center
-                         regardless of title length. -->
-                    <div class="flex sm:grid sm:grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-4">
+                    <!-- Mobile: stacked rows (now playing / transport /
+                         volume) so shuffle, prev, next, loop, and volume
+                         are all reachable with touch instead of being
+                         hidden off-screen. Desktop (sm+): the original
+                         grid-cols-[1fr_auto_1fr] — the two side columns stay
+                         equal width (unlike flex-grow, which the volume
+                         column's max-width previously threw off), so the
+                         transport buttons are always dead-center regardless
+                         of title length, and everything sits on one row. -->
+                    <div class="flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
                         <!-- NOW PLAYING (left) -->
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto sm:flex-1">
                             <div id="current-track-thumb-wrap"
                                 class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828] flex items-center justify-center">
                                 <img id="current-track-thumb" class="hidden w-full h-full object-cover" alt="" />
@@ -844,7 +858,7 @@
                         <div id="transport-controls"
                             class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0">
                             <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
-                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4l5 5m0 0V5m0 4H5m11 6l5 5m0 0v-4m0 4h-4M4 20l16-16">
@@ -855,7 +869,7 @@
                             </button>
 
                             <button id="prev-btn"
-                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                                 </svg>
@@ -874,14 +888,14 @@
                             </button>
 
                             <button id="next-btn"
-                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                                 </svg>
                             </button>
 
                             <button id="loop-btn" title="Repeat" data-i18n-title="loop_title"
-                                class="hidden sm:inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-5.36M20 15a9 9 0 01-14.13 5.36">
@@ -892,10 +906,11 @@
                             </button>
                         </div>
 
-                        <!-- VOLUME (right) — column always reserved (for centering);
-                             content itself only shown at md+ so mobile stays clean. -->
+                        <!-- VOLUME (right) — its own full-width row on mobile
+                             (stacked below transport); collapses into the
+                             right-hand grid column at sm+ like before. -->
                         <div
-                            class="hidden md:flex items-center gap-2 justify-end min-w-0 max-w-[180px] justify-self-end">
+                            class="flex items-center gap-2 justify-center w-full sm:w-auto sm:justify-end min-w-0 sm:max-w-[180px] sm:justify-self-end">
                             <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
                                 class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
                                 <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
@@ -1041,6 +1056,11 @@
                 set_password_title: "Set Room Password",
                 leave_room_title: "Return to Lobby Select",
                 connecting: "Connecting...",
+                offline_badge: "Offline",
+                offline_title: "No internet connection — sync is paused and only downloaded tracks will play.",
+                reconnecting_badge: "Reconnecting...",
+                back_online_toast: "Back online — resyncing...",
+                track_not_cached: "This track hasn't been played on this device before, so it can't play offline yet.",
                 host_badge: "Host",
                 guest_badge: "Guest (Listening)",
                 save_btn: "Save",
@@ -1141,6 +1161,11 @@
                 set_password_title: "방 비밀번호 설정",
                 leave_room_title: "로비 목록으로 돌아가기",
                 connecting: "연결 중...",
+                offline_badge: "오프라인",
+                offline_title: "인터넷 연결 없음 — 동기화가 일시 중지되었으며 다운로드된 트랙만 재생됩니다.",
+                reconnecting_badge: "재연결 중...",
+                back_online_toast: "다시 온라인 상태입니다 — 다시 동기화 중...",
+                track_not_cached: "이 기기에서 아직 재생한 적이 없는 트랙이라 오프라인에서 재생할 수 없습니다.",
                 host_badge: "호스트",
                 guest_badge: "게스트 (청취 중)",
                 save_btn: "저장",
@@ -1241,6 +1266,11 @@
                 set_password_title: "ルームパスワードを設定",
                 leave_room_title: "ロビー選択に戻る",
                 connecting: "接続中...",
+                offline_badge: "オフライン",
+                offline_title: "インターネット接続がありません。同期は一時停止し、ダウンロード済みのトラックのみ再生できます。",
+                reconnecting_badge: "再接続中...",
+                back_online_toast: "オンラインに戻りました — 再同期しています...",
+                track_not_cached: "この端末でまだ再生したことがないトラックのため、オフラインでは再生できません。",
                 host_badge: "ホスト",
                 guest_badge: "ゲスト（視聴中）",
                 save_btn: "保存",
@@ -1343,6 +1373,7 @@
             renderSavedLobbiesList();
             if (roomChannel) renderParticipants(roomChannel.presenceState());
             if (roomId) updateRoleUI();
+            updateOfflineBadge();
         }
 
         function setLanguage(lang) {
@@ -2044,6 +2075,78 @@
         volumeBtn?.addEventListener('click', toggleMute);
 
         // -------------------------------------------------------------
+        // OFFLINE SUPPORT
+        // A service worker (registered below) precaches the app shell and
+        // caches direct-URL audio files the first time they're played, so
+        // revisiting the app and replaying already-heard tracks keeps
+        // working with no connection. Room sync (Supabase Realtime) and
+        // YouTube playback can't work offline by nature — they need a live
+        // socket / YouTube's own servers — so this section is about failing
+        // gracefully, showing a clear status, and resyncing automatically
+        // the moment the connection comes back.
+        // -------------------------------------------------------------
+        const offlineBadge = document.getElementById('offline-badge');
+        const offlineBadgeText = document.getElementById('offline-badge-text');
+        let realtimeConnected = true; // optimistic until told otherwise
+
+        function updateOfflineBadge() {
+            if (!offlineBadge) return;
+            if (!navigator.onLine) {
+                offlineBadge.classList.remove('hidden');
+                offlineBadge.classList.add('inline-flex');
+                if (offlineBadgeText) offlineBadgeText.innerText = t('offline_badge');
+            } else if (!realtimeConnected && roomId) {
+                offlineBadge.classList.remove('hidden');
+                offlineBadge.classList.add('inline-flex');
+                if (offlineBadgeText) offlineBadgeText.innerText = t('reconnecting_badge');
+            } else {
+                offlineBadge.classList.add('hidden');
+                offlineBadge.classList.remove('inline-flex');
+            }
+        }
+
+        function setupOfflineHandling() {
+            updateOfflineBadge();
+
+            window.addEventListener('online', () => {
+                updateOfflineBadge();
+                // supabase-js reconnects its own websocket automatically,
+                // but nudge the room state back in sync right away instead
+                // of waiting for the next heartbeat/interval.
+                if (roomChannel) {
+                    if (isHost) {
+                        broadcastState();
+                    } else {
+                        roomChannel.send({ type: 'broadcast', event: 'request-state', payload: {} });
+                    }
+                }
+            });
+
+            window.addEventListener('offline', () => {
+                realtimeConnected = false;
+                updateOfflineBadge();
+            });
+
+            // A direct-URL track failing to load while offline usually
+            // means it was never played on this device, so the service
+            // worker has nothing cached for it — say so plainly instead of
+            // leaving the UI stuck on "Waiting for playback...".
+            audioPlayer?.addEventListener('error', () => {
+                if (!navigator.onLine && !isCurrentTrackYouTube() && audioPlayer.src) {
+                    const statusEl = document.getElementById('player-status-text');
+                    if (statusEl) statusEl.innerText = t('track_not_cached');
+                }
+            });
+        }
+
+        function registerServiceWorker() {
+            if (!('serviceWorker' in navigator)) return;
+            navigator.serviceWorker.register('sw.js').catch((err) => {
+                console.warn('Service worker registration failed:', err);
+            });
+        }
+
+        // -------------------------------------------------------------
         // SUPABASE-BACKED LOBBY STORAGE
         // (Replaces the old localStorage-based saved lobbies / room state)
         // -------------------------------------------------------------
@@ -2324,6 +2427,8 @@
             loadInitialVolume();
             renderSavedLobbiesList();
             setActiveTab('queue');
+            setupOfflineHandling();
+            registerServiceWorker();
 
             document.getElementById('nickname-input').value = nickname;
 
@@ -2757,6 +2862,8 @@
                 })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
+                        realtimeConnected = true;
+                        updateOfflineBadge();
                         joinedAt = joinedAt || Date.now();
                         roomChannel.track({ clientId, nickname, isHost, joinedAt });
 
@@ -2768,6 +2875,12 @@
                             clearInterval(clockSyncIntervalId);
                             clockSyncIntervalId = setInterval(syncClockWithHost, 20000);
                         }
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                        // Connection dropped (flaky wifi, backgrounded tab,
+                        // socket hiccup) — supabase-js retries on its own;
+                        // this just keeps the badge honest in the meantime.
+                        realtimeConnected = false;
+                        updateOfflineBadge();
                     }
                 });
         }
