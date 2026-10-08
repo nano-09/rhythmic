@@ -269,7 +269,7 @@
 
     <!-- JOIN / UNLOCK AUDIO OVERLAY -->
     <div id="join-overlay"
-        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div
             class="bg-[#181818]/90 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm space-y-6 shadow-2xl">
             <div class="flex items-center justify-center gap-2.5">
@@ -297,7 +297,7 @@
 
     <!-- PASSWORD MODAL (used both for joining a locked room and for host setting a password) -->
     <div id="password-modal"
-        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div
             class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-5 shadow-2xl">
             <div class="w-14 h-14 mx-auto bg-[#282828] rounded-2xl flex items-center justify-center">
@@ -362,7 +362,7 @@
          user commits to creating a room, so these fields don't sit next to
          (and get confused with) the "join with a code" section below. -->
     <div id="create-room-modal"
-        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        class="fixed inset-0 bg-[#000000]/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div
             class="bg-[#181818]/95 p-6 sm:p-8 rounded-3xl border border-[#282828] text-center max-w-sm w-full space-y-6 shadow-2xl">
             <div class="flex items-center justify-center gap-2.5">
@@ -502,7 +502,7 @@
             </div>
 
             <div id="room-select-screen"
-                class="hidden w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-8 space-y-8">
+                class="hidden w-full max-w-md bg-[#181818]/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-[#282828] p-5 sm:p-8 space-y-6 sm:space-y-8">
                 <div class="text-center space-y-1.5">
                     <div class="flex items-center justify-center gap-2">
                         <div
@@ -671,12 +671,12 @@
             </header>
 
             <!-- MAIN SCROLLABLE CONTENT -->
-            <div class="flex-1 min-h-0 overflow-y-auto">
-                <div class="max-w-5xl mx-auto w-full px-3 sm:px-6 py-5 space-y-5">
+            <div class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+                <div class="max-w-5xl mx-auto w-full px-3 sm:px-6 py-5 space-y-5 overflow-x-hidden">
 
                     <!-- ADD A TRACK (host only) -->
                     <div id="host-only-track-input-section"
-                        class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-4 sm:p-5">
+                        class="hidden bg-[#141414]/80 border border-[#282828] rounded-2xl p-3.5 sm:p-5 w-full min-w-0 max-w-full overflow-hidden">
                         <h3 class="text-[10px] font-bold text-[#727272] uppercase tracking-wider mb-2"
                             data-i18n="add_track_heading">Add a Track</h3>
 
@@ -711,18 +711,13 @@
                         </div>
 
                         <!-- The three panels below are stacked into the SAME grid cell
-                             (col-start-1 row-start-1) instead of being laid out one after
-                             another. That makes this grid container always size itself to
-                             whichever panel is tallest, so the card doesn't grow/shrink
-                             every time the user switches Search/Upload/URL tabs. Inactive
-                             panels are hidden with "invisible" (keeps their layout box,
-                             just hides it) rather than "hidden" (display:none, which would
-                             remove them from the grid's height calculation again). -->
-                        <div class="grid">
+                             (col-start-1 row-start-1) with grid-cols-1 min-w-0 to avoid
+                             blowouts. Inactive panels are hidden with "invisible". -->
+                        <div class="grid grid-cols-1 w-full min-w-0">
                             <div id="add-method-search-panel"
-                                class="add-method-panel col-start-1 row-start-1 space-y-2">
+                                class="add-method-panel col-start-1 row-start-1 space-y-2 w-full min-w-0 max-w-full overflow-hidden">
                                 <div class="flex gap-2">
-                                    <div class="relative flex-1 flex items-center">
+                                    <div class="relative flex-1 flex items-center min-w-0">
                                         <svg class="absolute left-3.5 w-4 h-4 text-[#727272] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
                                         </svg>
@@ -732,7 +727,7 @@
                                             class="w-full bg-[#101010] border border-[#282828] text-xs rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all shadow-inner" />
                                     </div>
                                     <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
-                                        class="flex-shrink-0 bg-[#1DB954] hover:bg-[#1ED760] text-black text-xs font-bold px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 shadow-md shadow-[#1DB954]/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                                        class="flex-shrink-0 bg-[#1DB954] hover:bg-[#1ED760] text-black text-xs font-bold px-3.5 sm:px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 shadow-md shadow-[#1DB954]/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                                 d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
@@ -742,12 +737,12 @@
                                 </div>
                                 <p id="youtube-search-status" class="text-[10px] hidden"></p>
                                 <div id="youtube-search-results"
-                                    class="hidden max-h-64 overflow-y-auto overflow-x-hidden space-y-1 bg-[#101010]/95 backdrop-blur-xl border border-white/5 rounded-2xl p-1.5 shadow-2xl">
+                                    class="hidden max-h-64 overflow-y-auto overflow-x-hidden space-y-1 bg-[#101010]/95 backdrop-blur-xl border border-white/5 rounded-2xl p-1.5 shadow-2xl w-full min-w-0 max-w-full">
                                 </div>
                             </div>
 
                             <div id="add-method-upload-panel"
-                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2 w-full min-w-0 max-w-full overflow-hidden">
                                 <div class="flex gap-2">
                                     <label for="local-file-input"
                                         class="flex-1 bg-[#000000] hover:bg-[#181818] border border-[#282828] hover:border-[#3E3E3E] text-xs text-[#A7A7A7] hover:text-[#D1D1D1] rounded-xl px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-all">
@@ -772,7 +767,7 @@
                             </div>
 
                             <div id="add-method-url-panel"
-                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2">
+                                class="add-method-panel invisible pointer-events-none col-start-1 row-start-1 space-y-2 w-full min-w-0 max-w-full overflow-hidden">
                                 <textarea id="track-url-input" rows="3" data-i18n-placeholder="track_url_placeholder"
                                     placeholder="https://example.com/song1.mp3&#10;https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                                     class="w-full bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all disabled:opacity-50 resize-none leading-relaxed"></textarea>
@@ -842,7 +837,9 @@
                     </div>
 
                 </div>
-                     <footer
+            </div>
+
+            <footer
                 class="flex-shrink-0 border-t border-[#282828]/80 bg-[#0d0d0d]/95 backdrop-blur-2xl px-3 sm:px-6 pt-2"
                 style="padding-bottom: max(var(--safe-bottom), 0.75rem); padding-left: max(var(--safe-left), 0.75rem); padding-right: max(var(--safe-right), 0.75rem);">
                 <audio id="audio-player" class="hidden" controls></audio>
@@ -964,6 +961,7 @@
                         </div>
 
                     </div>
+                </div>
             </footer>
         </div>
     </main>
@@ -1930,7 +1928,7 @@
                 return `
               <button type="button" data-video-id="${videoId}" data-title="${escapeHtml(title)}"
                   data-duration="${durationSeconds || ''}"
-                  class="yt-search-result-item group w-full flex items-center gap-2 p-1.5 rounded-xl bg-[#181818]/60 hover:bg-[#242424] border border-white/5 hover:border-[#1DB954]/30 transition-all text-left active:scale-[0.99] overflow-hidden">
+                  class="yt-search-result-item group w-full max-w-full min-w-0 box-border flex items-center gap-2 p-1.5 rounded-xl bg-[#181818]/60 hover:bg-[#242424] border border-white/5 hover:border-[#1DB954]/30 transition-all text-left active:scale-[0.99] overflow-hidden">
                 <div class="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#242424] shadow-sm">
                   <img src="${thumb}" class="w-full h-full object-cover" loading="lazy" />
                 </div>
