@@ -1739,6 +1739,54 @@
             return hours * 3600 + minutes * 60 + seconds;
         }
 
+        // In the native Android app, Google Cloud restricts the YouTube Data API key
+        // to referrers like http://localhost:5173. Standard browser fetch inside Android WebView
+        // sends "https://localhost" which gets blocked by Google Cloud (403 forbidden).
+        // On native platforms, CapacitorHttp executes requests through Android's native HTTP stack
+        // and includes the allowed Referer header.
+        async function fetchYoutubeApi(url, fetchOptions = {}) {
+            try {
+                const cap = window.Capacitor;
+                if (cap) {
+                    if (typeof cap.nativePromise === 'function') {
+                        const nativeRes = await cap.nativePromise('CapacitorHttp', 'request', {
+                            url: url,
+                            method: 'GET',
+                            headers: {
+                                'Referer': 'http://localhost:5173'
+                            }
+                        });
+                        if (nativeRes && typeof nativeRes.status === 'number') {
+                            const data = (typeof nativeRes.data === 'string') ? JSON.parse(nativeRes.data) : nativeRes.data;
+                            return {
+                                ok: nativeRes.status >= 200 && nativeRes.status < 300,
+                                status: nativeRes.status,
+                                json: async () => data
+                            };
+                        }
+                    }
+                    const capHttp = cap.Plugins?.CapacitorHttp;
+                    if (capHttp && typeof capHttp.get === 'function') {
+                        const res = await capHttp.get({
+                            url: url,
+                            headers: {
+                                'Referer': 'http://localhost:5173'
+                            }
+                        });
+                        const data = (typeof res.data === 'string') ? JSON.parse(res.data) : res.data;
+                        return {
+                            ok: res.status >= 200 && res.status < 300,
+                            status: res.status,
+                            json: async () => data
+                        };
+                    }
+                }
+            } catch (err) {
+                console.warn('[SyncBeats] Native CapacitorHttp request failed, falling back to fetch', err);
+            }
+            return await fetch(url, fetchOptions);
+        }
+
         // The /search endpoint doesn't return video length, so once we have
         // a batch of video IDs we make one follow-up call to /videos for
         // their contentDetails.duration. Returns { [videoId]: seconds }.
@@ -1746,7 +1794,7 @@
             if (!videoIds.length) return {};
             try {
                 const url = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`;
-                const res = await fetch(url);
+                const res = await fetchYoutubeApi(url);
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) return {};
                 const map = {};
@@ -1800,7 +1848,7 @@
 
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
-                const res = await fetch(url, { signal: youtubeSearchAbortController.signal });
+                const res = await fetchYoutubeApi(url, { signal: youtubeSearchAbortController.signal });
                 const data = await res.json().catch(() => ({}));
 
                 if (!res.ok) {
