@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Sync Beats</title>
     <link rel="icon" href="data:,">
     <link rel="manifest" href="manifest.json">
@@ -21,10 +21,59 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     <style>
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
         html,
         body {
             font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
             letter-spacing: -0.01em;
+            background-color: #080808;
+        }
+
+        /* Ambient glow */
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 0.12; transform: scale(1); }
+            50% { opacity: 0.25; transform: scale(1.08); }
+        }
+
+        .ambient-glow {
+            animation: pulse-subtle 9s ease-in-out infinite alternate;
+        }
+
+        /* Animated mini-equalizer */
+        @keyframes eq-bounce-1 {
+            0%, 100% { height: 4px; }
+            50% { height: 14px; }
+        }
+        @keyframes eq-bounce-2 {
+            0%, 100% { height: 14px; }
+            50% { height: 5px; }
+        }
+        @keyframes eq-bounce-3 {
+            0%, 100% { height: 7px; }
+            50% { height: 15px; }
+        }
+        .eq-anim-1 { animation: eq-bounce-1 0.75s ease-in-out infinite; }
+        .eq-anim-2 { animation: eq-bounce-2 0.65s ease-in-out infinite; }
+        .eq-anim-3 { animation: eq-bounce-3 0.85s ease-in-out infinite; }
+
+        .playing-glow {
+            box-shadow: 0 0 22px 2px rgba(29, 185, 84, 0.45);
+            border-color: rgba(29, 185, 84, 0.6) !important;
+        }
+
+        /* Smooth interactive micro-animations */
+        button:active:not(:disabled), .active-scale:active {
+            transform: scale(0.96);
         }
 
         ::-webkit-scrollbar {
@@ -526,10 +575,11 @@
 
             <!-- TOP BAR -->
             <header
-                class="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-4 border-b border-[#282828]/80 bg-[#000000]/50 backdrop-blur-xl">
+                class="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4 px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#282828]/80 bg-[#000000]/70 backdrop-blur-2xl"
+                style="padding-top: max(var(--safe-top), 0.75rem); padding-left: max(var(--safe-left), 0.75rem); padding-right: max(var(--safe-right), 0.75rem);">
                 <div class="flex items-center gap-3 min-w-0">
                     <button id="leave-room-btn" title="Return to Lobby Select" data-i18n-title="leave_room_title"
-                        class="bg-[#282828]/80 hover:bg-[#3E3E3E] text-[#B3B3B3] hover:text-white p-2 sm:p-2.5 rounded-full border border-[#3E3E3E]/50 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0">
+                        class="bg-[#1f1f1f] hover:bg-[#2f2f2f] text-[#B3B3B3] hover:text-white p-2 sm:p-2.5 rounded-xl border border-white/5 transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 shadow-sm">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
@@ -540,12 +590,12 @@
                     <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1.5 min-w-0">
                             <h2 id="lobby-name-display"
-                                class="text-base sm:text-lg font-bold text-white truncate min-w-0 flex-shrink">
+                                class="text-base sm:text-lg font-bold text-white tracking-tight truncate min-w-0 flex-shrink">
                                 Lobby</h2>
                             <input id="lobby-name-edit-input" type="text" maxlength="40"
                                 class="hidden w-full bg-[#000000] border border-[#1DB954]/50 text-base sm:text-lg font-bold rounded-xl px-2.5 py-1 text-white focus:outline-none focus:ring-1 focus:ring-[#1DB954]" />
                             <span id="role-badge"
-                                class="flex-shrink-0 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-[#282828] text-[#B3B3B3] whitespace-nowrap"
+                                class="flex-shrink-0 px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-[#242424] border border-white/5 text-[#B3B3B3] whitespace-nowrap"
                                 data-i18n="connecting">
                                 Connecting...
                             </span>
@@ -556,7 +606,7 @@
                                 <span id="offline-badge-text">Offline</span>
                             </span>
                             <button id="edit-lobby-name-btn" title="Rename Lobby" data-i18n-title="rename_lobby_title"
-                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 sm:p-2 rounded-lg transition-all active:scale-95">
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#242424] p-1.5 sm:p-2 rounded-lg transition-all active:scale-95">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
@@ -564,7 +614,7 @@
                                 </svg>
                             </button>
                             <button id="set-password-btn" title="Set Room Password" data-i18n-title="set_password_title"
-                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#282828] p-1.5 sm:p-2 rounded-lg transition-all active:scale-95">
+                                class="hidden flex-shrink-0 text-[#727272] hover:text-[#1ED760] hover:bg-[#242424] p-1.5 sm:p-2 rounded-lg transition-all active:scale-95">
                                 <svg id="password-lock-icon" class="w-4 h-4" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -576,10 +626,7 @@
                     </div>
                 </div>
 
-                <!-- Secondary actions — wraps onto additional rows on narrow
-                     screens instead of scrolling off-screen, so every pill
-                     (including the language switcher) stays visible without
-                     a hidden horizontal swipe. Right-aligned from sm+. -->
+                <!-- Secondary actions -->
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-start sm:justify-end">
                     <button id="save-lobby-btn" title="Save Lobby State"
                         class="hidden bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
@@ -592,7 +639,7 @@
                     </button>
 
                     <div
-                        class="bg-[#000000] border border-[#282828] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                        class="bg-[#141414] border border-[#1DB954]/30 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2 shadow-sm shadow-[#1DB954]/10 flex-shrink-0">
                         <span
                             class="hidden sm:inline text-[10px] text-[#727272] uppercase font-bold tracking-wider whitespace-nowrap"
                             data-i18n="code_label">Code:</span>
@@ -601,8 +648,8 @@
                     </div>
 
                     <button id="copy-link-btn"
-                        class="bg-[#1DB954]/20 hover:bg-[#1DB954]/30 text-[#4CD97B] border border-[#1DB954]/30 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 active:scale-95 flex-shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="bg-[#1DB954] hover:bg-[#1ED760] text-black font-bold px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm transition-all duration-200 flex items-center gap-1.5 active:scale-95 shadow-md shadow-[#1DB954]/25 flex-shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
                             </path>
@@ -610,13 +657,9 @@
                         <span class="hidden sm:inline" data-i18n="copy_btn">Copy</span>
                     </button>
 
-                    <!-- In-room language switcher. The global #lang-switcher (fixed
-                         top-right, used on the pre-join screens) is hidden while a
-                         room is open so it doesn't overlap this header's own
-                         controls — this is the in-header equivalent. Same .lang-btn
-                         class, so the existing click handlers pick it up too. -->
+                    <!-- In-room language switcher -->
                     <div
-                        class="flex items-center gap-1 bg-[#000000]/70 border border-[#282828] rounded-full p-1 flex-shrink-0">
+                        class="flex items-center gap-1 bg-[#141414]/90 border border-white/10 rounded-full p-0.5 sm:p-1 flex-shrink-0">
                         <button data-lang="en"
                             class="lang-btn px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition-all">EN</button>
                         <button data-lang="ko"
@@ -679,21 +722,27 @@
                             <div id="add-method-search-panel"
                                 class="add-method-panel col-start-1 row-start-1 space-y-2">
                                 <div class="flex gap-2">
-                                    <input id="youtube-search-input" type="text"
-                                        data-i18n-placeholder="search_youtube_placeholder"
-                                        placeholder="Search for a song..."
-                                        class="flex-1 min-w-0 bg-[#000000] border border-[#282828] text-xs rounded-xl px-3.5 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all" />
+                                    <div class="relative flex-1 flex items-center">
+                                        <svg class="absolute left-3.5 w-4 h-4 text-[#727272] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                                        </svg>
+                                        <input id="youtube-search-input" type="text"
+                                            data-i18n-placeholder="search_youtube_placeholder"
+                                            placeholder="Search for a song..."
+                                            class="w-full bg-[#101010] border border-[#282828] text-xs rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-[#535353] focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954] transition-all shadow-inner" />
+                                    </div>
                                     <button id="youtube-search-btn" title="Search" data-i18n-title="search_btn"
-                                        class="flex-shrink-0 bg-[#282828] hover:bg-[#3E3E3E] text-white text-xs font-bold w-10 rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                                        class="flex-shrink-0 bg-[#1DB954] hover:bg-[#1ED760] text-black text-xs font-bold px-4 rounded-xl transition-all duration-150 flex items-center justify-center gap-1.5 shadow-md shadow-[#1DB954]/20 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                                 d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
                                         </svg>
+                                        <span class="hidden sm:inline">Search</span>
                                     </button>
                                 </div>
                                 <p id="youtube-search-status" class="text-[10px] hidden"></p>
                                 <div id="youtube-search-results"
-                                    class="hidden max-h-56 overflow-y-auto space-y-1 bg-[#000000] border border-[#282828] rounded-xl p-1.5">
+                                    class="hidden max-h-60 overflow-y-auto space-y-1.5 bg-[#101010]/95 backdrop-blur-xl border border-white/5 rounded-2xl p-2 shadow-2xl">
                                 </div>
                             </div>
 
@@ -793,11 +842,9 @@
                     </div>
 
                 </div>
-            </div>
-
-            <!-- BOTTOM PLAYER BAR -->
-            <footer
-                class="flex-shrink-0 border-t border-[#282828] bg-[#0d0d0d]/95 backdrop-blur-xl px-3 sm:px-6 py-2.5">
+                     <footer
+                class="flex-shrink-0 border-t border-[#282828]/80 bg-[#0d0d0d]/95 backdrop-blur-2xl px-3 sm:px-6 pt-2"
+                style="padding-bottom: max(var(--safe-bottom), 0.75rem); padding-left: max(var(--safe-left), 0.75rem); padding-right: max(var(--safe-right), 0.75rem);">
                 <audio id="audio-player" class="hidden" controls></audio>
 
                 <div class="max-w-6xl mx-auto flex flex-col gap-1.5">
@@ -814,20 +861,11 @@
                         </div>
                     </div>
 
-                    <!-- Mobile: stacked rows (now playing / transport /
-                         volume) so shuffle, prev, next, loop, and volume
-                         are all reachable with touch instead of being
-                         hidden off-screen. Desktop (sm+): the original
-                         grid-cols-[1fr_auto_1fr] — the two side columns stay
-                         equal width (unlike flex-grow, which the volume
-                         column's max-width previously threw off), so the
-                         transport buttons are always dead-center regardless
-                         of title length, and everything sits on one row. -->
                     <div class="flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4">
                         <!-- NOW PLAYING (left) -->
                         <div class="flex items-center gap-3 min-w-0 w-full sm:w-auto sm:flex-1">
                             <div id="current-track-thumb-wrap"
-                                class="w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828] flex items-center justify-center">
+                                class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[#242424] border border-white/5 flex items-center justify-center transition-all duration-300">
                                 <img id="current-track-thumb" class="hidden w-full h-full object-cover" alt="" />
                                 <svg id="current-track-thumb-fallback" class="w-5 h-5 text-[#727272]" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
@@ -838,88 +876,90 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div id="current-track-title-wrap" class="marquee-wrap w-full">
-                                    <span id="current-track-title" class="marquee-inner text-sm font-bold text-white"
+                                    <span id="current-track-title" class="marquee-inner text-sm font-bold text-white tracking-tight"
                                         data-i18n="no_track">No Track Selected</span>
                                 </div>
-                                <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span id="playing-eq-bars" class="hidden flex items-end gap-0.5 h-3 flex-shrink-0">
+                                        <span class="w-0.5 bg-[#1ED760] rounded-full eq-anim-1"></span>
+                                        <span class="w-0.5 bg-[#1ED760] rounded-full eq-anim-2"></span>
+                                        <span class="w-0.5 bg-[#1ED760] rounded-full eq-anim-3"></span>
+                                    </span>
                                     <span class="relative flex h-1.5 w-1.5 flex-shrink-0">
                                         <span
                                             class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1ED760] opacity-75"></span>
                                         <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#1DB954]"></span>
                                     </span>
                                     <p id="player-status-text" class="text-[11px] font-medium text-[#A7A7A7] truncate"
-                                        data-i18n="waiting_playback">Waiting for
-                                        playback...</p>
+                                        data-i18n="waiting_playback">Waiting for playback...</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- TRANSPORT (right on mobile, center on sm+) -->
+                        <!-- TRANSPORT (center) -->
                         <div id="transport-controls"
-                            class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0">
+                            class="flex items-center justify-center gap-4 sm:gap-5 flex-shrink-0 py-1 sm:py-0">
                             <button id="shuffle-btn" title="Shuffle" data-i18n-title="shuffle_title"
-                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative p-1.5">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4l5 5m0 0V5m0 4H5m11 6l5 5m0 0v-4m0 4h-4M4 20l16-16">
                                     </path>
                                 </svg>
                                 <span id="shuffle-dot"
-                                    class="hidden absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#1ED760]"></span>
+                                    class="hidden absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#1ED760] ring-2 ring-[#0d0d0d]"></span>
                             </button>
 
                             <button id="prev-btn"
-                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed p-1.5">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                                 </svg>
                             </button>
 
                             <button id="play-btn"
-                                class="p-3 sm:p-4 bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black rounded-full shadow-xl shadow-black/40 transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
-                                <svg id="play-icon" class="w-6 h-6 sm:w-7 sm:h-7 translate-x-0.5" fill="currentColor"
+                                class="p-3 sm:p-3.5 bg-[#1DB954] hover:bg-[#1ED760] hover:scale-105 text-black rounded-full shadow-lg shadow-[#1DB954]/25 transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                <svg id="play-icon" class="w-5 h-5 sm:w-6 sm:h-6 translate-x-0.5" fill="currentColor"
                                     viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
-                                <svg id="pause-icon" class="w-6 h-6 sm:w-7 sm:h-7 hidden" fill="currentColor"
+                                <svg id="pause-icon" class="w-5 h-5 sm:w-6 sm:h-6 hidden" fill="currentColor"
                                     viewBox="0 0 24 24">
                                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                                 </svg>
                             </button>
 
                             <button id="next-btn"
-                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed p-1.5">
                                 <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
                                 </svg>
                             </button>
 
                             <button id="loop-btn" title="Repeat" data-i18n-title="loop_title"
-                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="inline-flex text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed relative p-1.5">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.13-5.36M20 15a9 9 0 01-14.13 5.36">
                                     </path>
                                 </svg>
                                 <span id="loop-one-badge"
-                                    class="hidden absolute -top-1 -right-1.5 text-[8px] font-black text-black bg-[#1ED760] rounded-full w-3 h-3 flex items-center justify-center">1</span>
+                                    class="hidden absolute -top-0.5 -right-1 text-[8px] font-black text-black bg-[#1ED760] rounded-full w-3.5 h-3.5 flex items-center justify-center">1</span>
                             </button>
                         </div>
 
-                        <!-- VOLUME (right) — its own full-width row on mobile
-                             (stacked below transport); collapses into the
-                             right-hand grid column at sm+ like before. -->
+                        <!-- VOLUME (right) -->
                         <div
                             class="flex items-center gap-2 justify-center w-full sm:w-auto sm:justify-end min-w-0 sm:max-w-[180px] sm:justify-self-end">
                             <button id="volume-btn" title="Mute" data-i18n-title="volume_title"
-                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0">
-                                <svg id="volume-icon-high" class="w-5 h-5" fill="none" stroke="currentColor"
+                                class="text-[#A7A7A7] hover:text-white transition-all duration-150 hover:scale-105 active:scale-95 flex-shrink-0 p-1">
+                                <svg id="volume-icon-high" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07">
                                     </path>
                                 </svg>
-                                <svg id="volume-icon-muted" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+                                <svg id="volume-icon-muted" class="w-4 h-4 sm:w-5 sm:h-5 hidden" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6"></path>
@@ -927,14 +967,12 @@
                             </button>
                             <input id="volume-slider" type="range" min="0" max="100" value="100" step="1"
                                 title="Your volume (only affects your device)" data-i18n-title="volume_title"
-                                class="seek-slider w-full h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none" />
+                                class="seek-slider w-full max-w-[130px] sm:max-w-none h-1.5 rounded-lg appearance-none cursor-pointer focus:outline-none" />
                             <span id="volume-value"
-                                class="text-[10px] font-mono text-[#727272] w-7 text-right flex-shrink-0">100</span>
+                                class="text-[10px] font-mono text-[#727272] w-6 text-right flex-shrink-0">100</span>
                         </div>
-                    </div>
                 </div>
             </footer>
-
         </div>
     </main>
 
@@ -1825,10 +1863,22 @@
             youtubeSearchStatus.classList.remove('text-[#727272]', 'text-red-400', 'text-[#1ED760]');
             if (!text) {
                 youtubeSearchStatus.classList.add('hidden');
-                youtubeSearchStatus.textContent = '';
+                youtubeSearchStatus.innerHTML = '';
                 return;
             }
-            youtubeSearchStatus.textContent = text;
+            if (text === t('searching_youtube')) {
+                youtubeSearchStatus.innerHTML = `
+                  <span class="inline-flex items-center gap-2 text-xs font-medium text-[#1ED760] py-1">
+                    <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>${escapeHtml(text)}</span>
+                  </span>
+                `;
+            } else {
+                youtubeSearchStatus.textContent = text;
+            }
             youtubeSearchStatus.classList.remove('hidden');
             youtubeSearchStatus.classList.add(tone === 'error' ? 'text-red-400' : tone === 'success' ? 'text-[#1ED760]' : 'text-[#727272]');
         }
@@ -1888,16 +1938,20 @@
                 return `
               <button type="button" data-video-id="${videoId}" data-title="${escapeHtml(title)}"
                   data-duration="${durationSeconds || ''}"
-                  class="yt-search-result-item w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#181818] transition-all text-left">
-                <img src="${thumb}" class="w-10 h-10 rounded object-cover flex-shrink-0 bg-[#282828]" loading="lazy" />
-                <div class="min-w-0 flex-1">
-                  <p class="text-xs font-medium text-white truncate">${escapeHtml(title)}</p>
-                  <p class="text-[10px] text-[#A7A7A7] truncate">${escapeHtml(channel)}</p>
+                  class="yt-search-result-item group w-full flex items-center gap-3 p-2 rounded-xl bg-[#181818]/60 hover:bg-[#242424] border border-white/5 hover:border-[#1DB954]/30 transition-all text-left active:scale-[0.99]">
+                <div class="relative w-11 h-11 rounded-lg overflow-hidden flex-shrink-0 bg-[#242424] shadow-sm">
+                  <img src="${thumb}" class="w-full h-full object-cover" loading="lazy" />
                 </div>
-                ${durationSeconds ? `<span class="text-[10px] font-mono text-[#727272] flex-shrink-0">${formatTime(durationSeconds)}</span>` : ''}
-                <svg class="w-4 h-4 text-[#1DB954] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-semibold text-white group-hover:text-[#1ED760] transition-colors truncate">${escapeHtml(title)}</p>
+                  <p class="text-[10px] text-[#8e8e8e] truncate mt-0.5">${escapeHtml(channel)}</p>
+                </div>
+                ${durationSeconds ? `<span class="text-[10px] font-mono font-medium text-[#727272] bg-[#121212] px-2 py-0.5 rounded-full border border-white/5 flex-shrink-0">${formatTime(durationSeconds)}</span>` : ''}
+                <div class="w-7 h-7 rounded-full bg-[#1DB954]/15 group-hover:bg-[#1DB954] text-[#1ED760] group-hover:text-black flex items-center justify-center flex-shrink-0 transition-all duration-200">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </div>
               </button>`;
             }).join('');
             youtubeSearchResults.classList.remove('hidden');
@@ -3606,6 +3660,17 @@
             } else {
                 playIcon.classList.remove('hidden');
                 pauseIcon.classList.add('hidden');
+            }
+
+            const thumbWrap = document.getElementById('current-track-thumb-wrap');
+            const eqBars = document.getElementById('playing-eq-bars');
+            if (thumbWrap) {
+                if (isPlaying && currentTrackIndex >= 0) thumbWrap.classList.add('playing-glow');
+                else thumbWrap.classList.remove('playing-glow');
+            }
+            if (eqBars) {
+                if (isPlaying && currentTrackIndex >= 0) eqBars.classList.remove('hidden');
+                else eqBars.classList.add('hidden');
             }
 
             // The now-playing title always auto-scrolls if it's too long to
