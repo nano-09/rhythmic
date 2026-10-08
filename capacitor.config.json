@@ -1,0 +1,11 @@
+{
+  "appId": "com.syncbeats.app",
+  "appName": "Sync Beats",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
