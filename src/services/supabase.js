@@ -17,10 +17,30 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 const GUEST_STORAGE_KEY = 'syncbeats_guest_profile';
 
+// Generate a per-tab session key so each browser tab has its own identity slot.
+// This prevents one tab's "Continue as Guest" from overwriting another tab's host identity.
+const getTabSessionKey = () => {
+  if (!sessionStorage.getItem('syncbeats_tab_id')) {
+    sessionStorage.setItem('syncbeats_tab_id', `tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
+  }
+  return `${GUEST_STORAGE_KEY}_${sessionStorage.getItem('syncbeats_tab_id')}`;
+};
+
 export const getStoredGuestUser = () => {
   try {
-    const raw = localStorage.getItem(GUEST_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    // First try the tab-scoped key, fall back to the legacy shared key
+    const tabKey = getTabSessionKey();
+    const tabRaw = localStorage.getItem(tabKey);
+    if (tabRaw) return JSON.parse(tabRaw);
+
+    // Legacy fallback: if there's a shared key, migrate it to the tab-scoped key
+    const legacyRaw = localStorage.getItem(GUEST_STORAGE_KEY);
+    if (legacyRaw) {
+      const legacyUser = JSON.parse(legacyRaw);
+      localStorage.setItem(tabKey, legacyRaw);
+      // Don't delete the legacy key, other tabs may be using it
+      return legacyUser;
+    }
   } catch (e) {
     console.error('Error reading guest profile:', e);
   }
@@ -28,19 +48,29 @@ export const getStoredGuestUser = () => {
 };
 
 export const createGuestUser = (nickname = 'Guest') => {
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  // Use crypto.randomUUID() for a truly unique, collision-proof guest ID
+  const uid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+    ? `guest_${crypto.randomUUID()}`
+    : `guest_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+
   const guestUser = {
-    id: `guest_${Date.now()}_${randomSuffix}`,
+    id: uid,
     email: null,
-    username: nickname.trim() || `Guest_${randomSuffix}`,
+    username: nickname.trim() || `Guest_${uid.slice(-6)}`,
     isGuest: true,
   };
-  localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestUser));
+
+  // Store under the tab-scoped key so other tabs are unaffected
+  const tabKey = getTabSessionKey();
+  localStorage.setItem(tabKey, JSON.stringify(guestUser));
   return guestUser;
 };
 
 export const clearGuestUser = () => {
-  localStorage.removeItem(GUEST_STORAGE_KEY);
+  try {
+    // Clear only THIS tab's guest profile
+    localStorage.removeItem(getTabSessionKey());
+  } catch (e) {}
 };
 
 // ================= AUTH HELPERS =================
@@ -260,6 +290,16 @@ export const playlistService = {
       .delete()
       .eq('id', trackId);
     if (error) throw error;
+  },
+
+  async reorderTracks(playlistId, orderedTracks) {
+    const promises = orderedTracks.map((tr, index) =>
+      supabase
+        .from('playlist_tracks')
+        .update({ position: index })
+        .eq('id', tr.id)
+    );
+    await Promise.all(promises);
   },
 
   // Members

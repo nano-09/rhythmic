@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { 
   Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle, 
-  Sparkles, Mic2, Volume2, VolumeX, Maximize2, Minimize2, ChevronUp 
+  Sparkles, Mic2, Minimize2, ChevronUp 
 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { useLanguage } from '../context/LanguageContext';
 import { formatTime } from '../services/youtube';
 
 export default function PlayerBar({ onOpenLyrics }) {
@@ -26,6 +27,7 @@ export default function PlayerBar({ onOpenLyrics }) {
     currentPlaylist,
     isHost,
   } = usePlayer();
+  const { t } = useLanguage();
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -93,7 +95,7 @@ export default function PlayerBar({ onOpenLyrics }) {
               {/* Shuffle */}
               <button
                 onClick={toggleShuffle}
-                title={`Shuffle: ${isShuffle ? 'On' : 'Off'}`}
+                title={`${t('shuffle')}: ${isShuffle ? 'On' : 'Off'}`}
                 className={`p-1.5 rounded-lg transition-all ${
                   isShuffle ? 'text-pink-400 bg-pink-500/10' : 'text-zinc-500 hover:text-white'
                 }`}
@@ -135,7 +137,7 @@ export default function PlayerBar({ onOpenLyrics }) {
               {/* Loop */}
               <button
                 onClick={toggleLoop}
-                title={`Loop mode: ${loopMode}`}
+                title={`${t('loop')}: ${loopMode}`}
                 className={`p-1.5 rounded-lg transition-all ${
                   loopMode !== 'off' ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-500 hover:text-white'
                 }`}
@@ -148,7 +150,7 @@ export default function PlayerBar({ onOpenLyrics }) {
               </button>
             </div>
 
-            {/* Time Scrubber (hidden on very small screens, visible on sm+) */}
+            {/* Time Scrubber */}
             <div className="hidden sm:flex items-center gap-2 w-full text-[10px] text-zinc-400 font-mono mt-1">
               <span>{formatTime(currentTime)}</span>
               <input
@@ -170,30 +172,30 @@ export default function PlayerBar({ onOpenLyrics }) {
             {/* Autoplay toggle */}
             <button
               onClick={toggleAutoplay}
-              title={`Autoplay: ${autoplay ? 'On' : 'Off'}`}
+              title={`${t('auto')}: ${autoplay ? 'On' : 'Off'}`}
               className={`hidden md:flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold transition-all ${
                 autoplay ? 'text-violet-300 bg-violet-600/20 border border-violet-500/30' : 'text-zinc-500 glass-button'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span className="text-[11px]">Auto</span>
+              <span className="text-[11px]">{t('auto')}</span>
             </button>
 
             {/* Lyrics Button */}
             <button
               onClick={onOpenLyrics}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-button text-xs text-zinc-300 hover:text-white"
-              title="View Lyrics"
+              title={t('lyrics')}
             >
               <Mic2 className="w-4 h-4 text-cyan-400" />
-              <span className="hidden sm:inline text-[11px]">Lyrics</span>
+              <span className="hidden sm:inline text-[11px]">{t('lyrics')}</span>
             </button>
 
             {/* Fullscreen Expand */}
             <button
               onClick={() => setIsExpanded(true)}
               className="p-1.5 rounded-xl glass-button text-zinc-400 hover:text-white"
-              title="Expand Player"
+              title={t('expand_player')}
             >
               <ChevronUp className="w-4 h-4" />
             </button>
@@ -204,7 +206,7 @@ export default function PlayerBar({ onOpenLyrics }) {
         {/* Notice if in party mode and user is guest */}
         {currentPlaylist?.type === 'party' && !isHost && (
           <div className="text-center text-[10px] text-zinc-500 -mb-1 mt-1">
-            Host is controlling playback in Party mode
+            {t('host_controlling')}
           </div>
         )}
       </div>
@@ -222,7 +224,7 @@ export default function PlayerBar({ onOpenLyrics }) {
             </button>
             <div className="text-center">
               <span className="text-[10px] uppercase font-bold tracking-widest text-zinc-500">
-                Playing From
+                {t('playing_from')}
               </span>
               <p className="text-xs font-bold text-white truncate max-w-[200px]">
                 {currentPlaylist?.name || 'Sync Beats'}
@@ -327,14 +329,14 @@ export default function PlayerBar({ onOpenLyrics }) {
                 }`}
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Autoplay {autoplay ? 'ON' : 'OFF'}</span>
+                <span>{t('auto')} {autoplay ? 'ON' : 'OFF'}</span>
               </button>
               <button
                 onClick={onOpenLyrics}
                 className="px-4 py-2 rounded-xl glass-button text-xs font-semibold text-cyan-300 flex items-center gap-2"
               >
                 <Mic2 className="w-4 h-4" />
-                <span>View Lyrics</span>
+                <span>{t('lyrics')}</span>
               </button>
             </div>
           </div>

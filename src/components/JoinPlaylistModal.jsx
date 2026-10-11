@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { X, KeyRound, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { playlistService } from '../services/supabase';
 import { usePlayer } from '../context/PlayerContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function JoinPlaylistModal({ isOpen, onClose }) {
   const { joinRoom } = usePlayer();
+  const { t } = useLanguage();
 
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -83,10 +85,10 @@ export default function JoinPlaylistModal({ isOpen, onClose }) {
         <div className="mb-5">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-cyan-400" />
-            Join Playlist
+            {t('join_title')}
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            Enter the 4-digit room code shared by the host.
+            {t('join_desc')}
           </p>
         </div>
 
@@ -100,7 +102,7 @@ export default function JoinPlaylistModal({ isOpen, onClose }) {
         <form onSubmit={handleJoin} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider text-center">
-              4-Digit Room Code
+              {t('room_code_label')}
             </label>
             <input
               type="text"
@@ -120,13 +122,13 @@ export default function JoinPlaylistModal({ isOpen, onClose }) {
             <div className="animate-fade-in pt-2">
               <label className="block text-xs font-semibold text-zinc-300 mb-1.5 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-amber-400" />
-                This room is protected by password:
+                {t('room_password_label')}
               </label>
               <input
                 type="password"
                 required
                 autoFocus
-                placeholder="Enter room password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full glass-input rounded-xl px-4 py-2.5 text-sm"
@@ -143,7 +145,7 @@ export default function JoinPlaylistModal({ isOpen, onClose }) {
               <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
             ) : (
               <>
-                <span>{needsPassword ? 'Verify & Enter' : 'Join Room'}</span>
+                <span>{needsPassword ? t('verify_and_enter') : t('join_action')}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

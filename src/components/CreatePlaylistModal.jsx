@@ -3,10 +3,12 @@ import { X, Radio, Disc3, ListMusic, Lock, Globe, Shield, Sparkles } from 'lucid
 import { playlistService } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function CreatePlaylistModal({ isOpen, onClose }) {
   const { user } = useAuth();
   const { joinRoom } = usePlayer();
+  const { t } = useLanguage();
 
   const [name, setName] = useState('');
   const [type, setType] = useState('party'); // 'party' | 'jam' | 'playlist'
@@ -20,11 +22,11 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
   const handleTypeSelect = (selectedType) => {
     setType(selectedType);
     if (selectedType === 'party') {
-      setIsPublic(true); // party is always public
+      setIsPublic(true);
     } else if (selectedType === 'jam') {
-      setIsPublic(true); // jam is public by default
+      setIsPublic(true);
     } else if (selectedType === 'playlist') {
-      setIsPublic(false); // playlist is private by default
+      setIsPublic(false);
     }
   };
 
@@ -72,10 +74,10 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
         <div className="mb-5">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Disc3 className="w-5 h-5 text-violet-400 animate-spin-slow" />
-            Create Playlist Room
+            {t('create_title')}
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            Choose your room style and invite others to sync or listen along.
+            {t('create_subtitle')}
           </p>
         </div>
 
@@ -89,12 +91,12 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
           {/* Playlist Name */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-1.5 uppercase tracking-wider">
-              Playlist Name
+              {t('playlist_name_label')}
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Midnight Beats, Road Trip Vibes"
+              placeholder="e.g. Midnight Beats, City Pop Vibes"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full glass-input rounded-xl px-4 py-2.5 text-sm"
@@ -104,7 +106,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
           {/* Type Selector */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 mb-2 uppercase tracking-wider">
-              Playlist Mode
+              {t('playlist_mode_label')}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               
@@ -120,14 +122,14 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Radio className="w-3.5 h-3.5 text-pink-400" />
-                    Party
+                    {t('party_mode')}
                   </span>
                   <span className="text-[9px] bg-pink-500/20 text-pink-300 px-1.5 py-0.5 rounded font-bold uppercase">
-                    Host DJ
+                    {t('host_dj')}
                   </span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
-                  Always public. Only host controls playback & queue. All listeners sync in real-time.
+                  {t('party_desc')}
                 </p>
               </div>
 
@@ -143,14 +145,14 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                    Jam
+                    {t('jam_mode')}
                   </span>
                   <span className="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded font-bold uppercase">
-                    Collab
+                    {t('collab')}
                   </span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
-                  Public by default. Everyone can play, pause, and add tracks. Synced playback.
+                  {t('jam_desc')}
                 </p>
               </div>
 
@@ -166,14 +168,14 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <ListMusic className="w-3.5 h-3.5 text-emerald-400" />
-                    Playlist
+                    {t('playlist_mode')}
                   </span>
                   <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase">
-                    Solo / Share
+                    {t('solo_share')}
                   </span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-tight">
-                  Private by default. Shared tracklist, but members listen independently.
+                  {t('playlist_desc')}
                 </p>
               </div>
 
@@ -191,12 +193,10 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
                 )}
                 <div>
                   <h4 className="text-xs font-bold text-white">
-                    {isPublic ? 'Public Playlist (4-Digit Room Code)' : 'Private Playlist'}
+                    {isPublic ? t('public_playlist') : t('private_playlist')}
                   </h4>
                   <p className="text-[11px] text-zinc-400">
-                    {isPublic
-                      ? 'Generates a 4-digit code so others can join this playlist.'
-                      : 'Only you can view and access this playlist.'}
+                    {isPublic ? t('public_desc') : t('private_desc')}
                   </p>
                 </div>
               </div>
@@ -223,11 +223,11 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
               <div className="pt-2 border-t border-white/10">
                 <label className="block text-xs font-medium text-zinc-300 mb-1 flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-zinc-400" />
-                  Optional Room Password
+                  {t('optional_password')}
                 </label>
                 <input
                   type="text"
-                  placeholder="Leave empty for open access"
+                  placeholder="Optional"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full glass-input rounded-xl px-3.5 py-2 text-xs"
@@ -245,7 +245,7 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
             {loading ? (
               <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
             ) : (
-              <span>Create & Launch Room</span>
+              <span>{t('create_and_launch')}</span>
             )}
           </button>
         </form>

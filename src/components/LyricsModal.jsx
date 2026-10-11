@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Mic2, Music, Sparkles, RefreshCw } from 'lucide-react';
 import { fetchLyrics } from '../services/lyrics';
 import { usePlayer } from '../context/PlayerContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function LyricsModal({ isOpen, onClose }) {
   const { currentTrack, currentTime } = usePlayer();
+  const { t } = useLanguage();
+
   const [lyricsData, setLyricsData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeLineIndex, setActiveLineIndex] = useState(-1);
@@ -97,18 +100,18 @@ export default function LyricsModal({ isOpen, onClose }) {
           {loading ? (
             <div className="py-24 text-center">
               <span className="animate-spin inline-block w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full" />
-              <p className="text-xs text-zinc-400 mt-2">Searching live lyrics...</p>
+              <p className="text-xs text-zinc-400 mt-2">{t('searching')}</p>
             </div>
           ) : !lyricsData ? (
             <div className="py-24 text-center space-y-3">
               <Music className="w-8 h-8 text-zinc-600 mx-auto" />
-              <p className="text-sm text-zinc-400 font-medium">Lyrics not available for this track.</p>
+              <p className="text-sm text-zinc-400 font-medium">{t('lyrics_unavailable')}</p>
               <button
                 onClick={loadLyrics}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-button text-xs text-zinc-300 hover:text-white"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry</span>
+                <span>{t('retry')}</span>
               </button>
             </div>
           ) : lyricsData.synced && lyricsData.synced.length > 0 ? (
@@ -139,9 +142,9 @@ export default function LyricsModal({ isOpen, onClose }) {
 
         {/* Footer info */}
         <div className="pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-zinc-500">
-          <span>Synced with playback</span>
+          <span>{t('synced_lyrics')}</span>
           <span className="flex items-center gap-1 text-zinc-400">
-            <Sparkles className="w-3 h-3 text-cyan-400" /> Powered by LRCLIB
+            <Sparkles className="w-3 h-3 text-cyan-400" /> {t('powered_by')}
           </span>
         </div>
 

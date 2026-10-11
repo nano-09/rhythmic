@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { X, Users, Crown, Shield, ArrowRightLeft, UserCheck } from 'lucide-react';
+import { X, Users, Crown, ArrowRightLeft } from 'lucide-react';
 import { playlistService } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function MembersModal({ isOpen, onClose }) {
   const { user } = useAuth();
   const { currentPlaylist, members, isHost, refreshMembers } = usePlayer();
+  const { t } = useLanguage();
   const [transferringId, setTransferringId] = useState(null);
 
   if (!isOpen || !currentPlaylist) return null;
 
   const handleTransferHost = async (targetMember) => {
-    const confirmTransfer = window.confirm(
-      `Are you sure you want to transfer host permissions to ${targetMember.username}?`
-    );
+    const confirmTransfer = window.confirm(t('confirm_transfer'));
     if (!confirmTransfer) return;
 
     setTransferringId(targetMember.user_id);
@@ -25,7 +25,7 @@ export default function MembersModal({ isOpen, onClose }) {
         targetMember.username
       );
       await refreshMembers(currentPlaylist.id);
-      alert(`Host successfully transferred to ${targetMember.username}!`);
+      alert(`Host transferred to ${targetMember.username}!`);
     } catch (err) {
       console.error('Failed to transfer host:', err);
       alert('Transfer failed: ' + err.message);
@@ -53,10 +53,10 @@ export default function MembersModal({ isOpen, onClose }) {
         <div className="mb-5">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Users className="w-5 h-5 text-violet-400" />
-            Room Members ({members.length})
+            {t('room_members')} ({members.length})
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
-            People currently in <span className="text-zinc-200 font-semibold">{currentPlaylist.name}</span>
+            <span className="text-zinc-200 font-semibold">{currentPlaylist.name}</span>
           </p>
         </div>
 
@@ -99,22 +99,22 @@ export default function MembersModal({ isOpen, onClose }) {
                             <Crown className="w-3 h-3" /> Host
                           </span>
                         ) : (
-                          <span className="text-zinc-400">Participant</span>
+                          <span className="text-zinc-400">{t('participant')}</span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Transfer Host Button (Visible if I am host and target is not host) */}
+                  {/* Transfer Host Button */}
                   {isHost && !isMemberHost && (
                     <button
                       onClick={() => handleTransferHost(member)}
                       disabled={transferringId === member.user_id}
                       className="px-2.5 py-1.5 rounded-lg glass-button text-xs font-semibold text-amber-300 hover:bg-amber-500/20 flex items-center gap-1.5 transition-all"
-                      title="Transfer Host to this user"
+                      title={t('make_host')}
                     >
                       <ArrowRightLeft className="w-3.5 h-3.5" />
-                      <span>Make Host</span>
+                      <span>{t('make_host')}</span>
                     </button>
                   )}
                 </div>

@@ -18,14 +18,12 @@ export function AuthProvider({ children }) {
           isGuest: false,
         });
       } else {
+        // Restore THIS tab's existing guest identity if present — never auto-create
         const guest = getStoredGuestUser();
         if (guest) {
           setUser(guest);
-        } else {
-          // Auto create guest so user can immediately experience the app if desired
-          const newGuest = createGuestUser('Guest');
-          setUser(newGuest);
         }
+        // If no guest is stored, user stays null → they must explicitly choose login/guest
       }
     } catch (e) {
       console.error('Error during initAuth:', e);
@@ -94,8 +92,9 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await authService.signOut();
-    const guest = createGuestUser('Guest');
-    setUser(guest);
+    clearGuestUser();
+    // Don't auto-create a new guest — let the user explicitly choose what to do next
+    setUser(null);
   };
 
   return (

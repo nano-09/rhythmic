@@ -52,6 +52,14 @@ export function PlayerProvider({ children }) {
     return true;
   };
 
+  const canReorderTracks = () => {
+    if (!currentPlaylist) return false;
+    if (currentPlaylist.type === 'party') return isHost;
+    if (currentPlaylist.type === 'jam') return true;
+    if (currentPlaylist.type === 'playlist') return true; // affects only local user
+    return false;
+  };
+
   // Setup BackgroundAudio lockscreen handlers
   useEffect(() => {
     backgroundAudio.setHandlers({
@@ -270,6 +278,35 @@ export function PlayerProvider({ children }) {
     }
   };
 
+  const resolveAndPlay = async (track, index, autoPlay) => {
+    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
+    const pendingQuery = decodeURIComponent(track.youtube_id.replace('__pending__', ''));
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(pendingQuery)}&key=${YOUTUBE_API_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const videoId = data.items?.[0]?.id?.videoId;
+      if (videoId && ytPlayerRef.current && isYtReadyRef.current) {
+        if (autoPlay) {
+          ytPlayerRef.current.loadVideoById(videoId, 0);
+          setIsPlaying(true);
+        } else {
+          ytPlayerRef.current.cueVideoById(videoId, 0);
+          setIsPlaying(false);
+        }
+        // Patch the track in Supabase so next time it loads immediately
+        const { supabase: sb } = await import('../services/supabase');
+        await sb.from('playlist_tracks').update({ youtube_id: videoId }).eq('id', track.id);
+      } else {
+        console.warn('Could not resolve YouTube ID for:', track.title);
+        handleTrackEnded();
+      }
+    } catch (e) {
+      console.warn('Failed to resolve pending YouTube ID:', e);
+      handleTrackEnded();
+    }
+  };
+
   const selectTrack = (index, autoPlay = true) => {
     if (index < 0 || index >= tracks.length) return;
     const track = tracks[index];
@@ -295,16 +332,21 @@ export function PlayerProvider({ children }) {
     });
 
     if (ytPlayerRef.current && isYtReadyRef.current) {
-      try {
-        if (autoPlay) {
-          ytPlayerRef.current.loadVideoById(track.youtube_id, 0);
-          setIsPlaying(true);
-        } else {
-          ytPlayerRef.current.cueVideoById(track.youtube_id, 0);
-          setIsPlaying(false);
+      // Handle pending YouTube ID (iTunes song whose YT ID wasn't resolved at add time)
+      if (track.youtube_id?.startsWith('__pending__')) {
+        resolveAndPlay(track, index, autoPlay);
+      } else {
+        try {
+          if (autoPlay) {
+            ytPlayerRef.current.loadVideoById(track.youtube_id, 0);
+            setIsPlaying(true);
+          } else {
+            ytPlayerRef.current.cueVideoById(track.youtube_id, 0);
+            setIsPlaying(false);
+          }
+        } catch (e) {
+          console.error('Error loading video:', e);
         }
-      } catch (e) {
-        console.error('Error loading video:', e);
       }
     }
 
@@ -524,9 +566,63 @@ export function PlayerProvider({ children }) {
   const refreshTracks = async (playlistId) => {
     try {
       const data = await playlistService.getTracks(playlistId);
+      if (currentPlaylist?.type === 'playlist') {
+        const storageKey = `playlist_order_${playlistId}_${user?.id || 'guest'}`;
+        const savedOrderRaw = localStorage.getItem(storageKey);
+        if (savedOrderRaw) {
+          try {
+            const orderIds = JSON.parse(savedOrderRaw);
+            const idMap = new Map(data.map(t => [t.id, t]));
+            const sorted = [];
+            for (const id of orderIds) {
+              if (idMap.has(id)) {
+                sorted.push(idMap.get(id));
+                idMap.delete(id);
+              }
+            }
+            idMap.forEach(t => sorted.push(t));
+            setTracks(sorted);
+            return;
+          } catch (_) {}
+        }
+      }
       setTracks(data);
     } catch (e) {
       console.error('Error fetching tracks:', e);
+    }
+  };
+
+  const reorderTracks = async (newOrderedTracks) => {
+    if (!canReorderTracks()) return;
+
+    // Maintain currently playing track index accurately
+    const currentTrack = tracks[currentTrackIndex];
+    if (currentTrack) {
+      const newIdx = newOrderedTracks.findIndex(t => t.id === currentTrack.id);
+      if (newIdx !== -1) {
+        setCurrentTrackIndex(newIdx);
+      }
+    }
+
+    setTracks(newOrderedTracks);
+
+    if (currentPlaylist.type === 'playlist') {
+      // Local only for playlist mode
+      try {
+        const storageKey = `playlist_order_${currentPlaylist.id}_${user?.id || 'guest'}`;
+        localStorage.setItem(storageKey, JSON.stringify(newOrderedTracks.map(t => t.id)));
+      } catch (e) {
+        console.error('Error saving local playlist track order:', e);
+      }
+    } else {
+      // Party & Jam modes: persist to Supabase to sync with all participants
+      try {
+        await playlistService.reorderTracks(currentPlaylist.id, newOrderedTracks);
+      } catch (e) {
+        console.error('Error reordering tracks:', e);
+        // Revert on failure
+        await refreshTracks(currentPlaylist.id);
+      }
     }
   };
 
@@ -582,6 +678,31 @@ export function PlayerProvider({ children }) {
     }
   };
 
+  const removeFromJoinedHistory = (playlistId) => {
+    try {
+      const history = getJoinedHistory();
+      const filtered = history.filter(p => p.id !== playlistId);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
+      return filtered;
+    } catch (e) {
+      console.error('Error removing from history:', e);
+      return [];
+    }
+  };
+
+  const cleanJoinedHistory = (validIds) => {
+    try {
+      const validSet = new Set(validIds);
+      const history = getJoinedHistory();
+      const filtered = history.filter(p => validSet.has(p.id));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
+      return filtered;
+    } catch (e) {
+      console.error('Error cleaning history:', e);
+      return [];
+    }
+  };
+
   const saveToJoinedHistory = (playlist) => {
     try {
       const history = getJoinedHistory();
@@ -633,8 +754,12 @@ export function PlayerProvider({ children }) {
         toggleShuffle,
         toggleAutoplay,
         refreshTracks,
+        reorderTracks,
         refreshMembers,
         getJoinedHistory,
+        removeFromJoinedHistory,
+        cleanJoinedHistory,
+        canReorderTracks,
       }}
     >
       {children}

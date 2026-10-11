@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function AuthModal({ isOpen, onClose }) {
   const { user, loginWithEmail, signupWithEmail, loginWithGoogle, loginAsGuest } = useAuth();
+  const { t } = useLanguage();
+
   const [tab, setTab] = useState('login'); // 'login' | 'signup' | 'guest'
   
   const [email, setEmail] = useState('');
@@ -29,7 +32,7 @@ export default function AuthModal({ isOpen, onClose }) {
         onClose();
       } else if (tab === 'signup') {
         await signupWithEmail(email, password, username);
-        setSuccessMsg('Account created successfully! You are now logged in.');
+        setSuccessMsg('Account created successfully!');
         setTimeout(() => onClose(), 1200);
       } else if (tab === 'guest') {
         loginAsGuest(guestName || 'Guest');
@@ -78,14 +81,14 @@ export default function AuthModal({ isOpen, onClose }) {
         <div className="mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
-            {tab === 'login' ? 'Welcome Back' : tab === 'signup' ? 'Create Account' : 'Guest Session'}
+            {tab === 'login' ? t('welcome_back') : tab === 'signup' ? t('create_account') : t('guest_session')}
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
             {tab === 'login'
-              ? 'Login to sync playlists and jam with friends'
+              ? t('hero_desc')
               : tab === 'signup'
-              ? 'Join Sync Beats with your email'
-              : 'Jump straight into the music without registration'}
+              ? t('create_account')
+              : t('guest_desc')}
           </p>
         </div>
 
@@ -98,7 +101,7 @@ export default function AuthModal({ isOpen, onClose }) {
               tab === 'login' ? 'bg-violet-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
             }`}
           >
-            Sign In
+            {t('sign_in')}
           </button>
           <button
             type="button"
@@ -107,7 +110,7 @@ export default function AuthModal({ isOpen, onClose }) {
               tab === 'signup' ? 'bg-violet-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
             }`}
           >
-            Register
+            {t('sign_up')}
           </button>
           <button
             type="button"
@@ -116,7 +119,7 @@ export default function AuthModal({ isOpen, onClose }) {
               tab === 'guest' ? 'bg-violet-600 text-white shadow-sm' : 'text-zinc-400 hover:text-white'
             }`}
           >
-            Guest
+            {t('guest_tab')}
           </button>
         </div>
 
@@ -137,7 +140,7 @@ export default function AuthModal({ isOpen, onClose }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {tab === 'signup' && (
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Username / Nickname</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">{t('username_label')}</label>
               <div className="relative">
                 <User className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
                 <input
@@ -154,7 +157,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
           {tab === 'guest' ? (
             <div>
-              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Display Nickname</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">{t('username_label')}</label>
               <div className="relative">
                 <User className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
                 <input
@@ -166,13 +169,13 @@ export default function AuthModal({ isOpen, onClose }) {
                 />
               </div>
               <p className="text-[11px] text-zinc-500 mt-2">
-                Guest sessions allow you to create rooms, join parties, and play songs without signing in.
+                {t('guest_desc')}
               </p>
             </div>
           ) : (
             <>
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Email Address</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">{t('email_label')}</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
                   <input
@@ -187,7 +190,7 @@ export default function AuthModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1.5">Password</label>
+                <label className="block text-xs font-medium text-zinc-300 mb-1.5">{t('password_label')}</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
                   <input
@@ -213,7 +216,7 @@ export default function AuthModal({ isOpen, onClose }) {
               <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
             ) : (
               <>
-                <span>{tab === 'login' ? 'Sign In' : tab === 'signup' ? 'Create Account' : 'Continue as Guest'}</span>
+                <span>{tab === 'login' ? t('sign_in') : tab === 'signup' ? t('create_account') : t('continue_guest')}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -247,7 +250,7 @@ export default function AuthModal({ isOpen, onClose }) {
                   d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16.5C3.7 20.2 7.5 23.5 12 23.5z"
                 />
               </svg>
-              <span>Continue with Google</span>
+              <span>{t('google_signin')}</span>
             </button>
           </div>
         )}
