@@ -1,0 +1,36 @@
+While keeping the overall theme, create a completely new project that accomplishes the following requirements.
+
+App Name: Sync Beats
+Type: Android IOS App
+Idea: Creating a music app that allows users to play songs, create playlist and share
+
+App flowchart
+
+1. User login
+    - don't have an account: create using email/password or with google account
+    - already have an account: login with email/password or with google account
+2. Main
+    - Create playlist
+        - name of the playlist
+        - public / private
+            - public: create a 4 digit code that other users can join
+                - may add password for security
+            - private: no other users can join
+        - Type
+            - party: always public, host (creator by default) can play/pause, add/remove songs from the playlist. all users in the playlist will also be affected by the host's action. Host can be transfered to other users.
+            - jam: public by default, can play/pause, add/remove songs from the playlist. all users in the playlist will also be affected by the host's action. Host can be transfered to other users.
+            - playlist: private by default. user can play, pause songs from the playlist. it only affects the user and no one else. Only host (creator by default) can add/remove songs from the playlist. Host can be transfered to other users.
+    - Join playlist
+        - requires 4 digit code and a password (if set).
+        - user will be able to join one playlist at once but all the previous playlists should be shown.
+3. Features in the playlist
+    - play: play the song that is currently selected.
+    - pause: pause the song that is currently playing.
+    - loop: loop the entire playlist or the song that is currently playing.
+    - autoplay: play the next song when the current song finishes
+    - shuffle: play the random song from the playlist when the current song finishes
+    - add song: search song from youtube (using current API) and allow user to add relevant songs to the playlist.
+    - remove song: remove song from the playlist
+    - lyrics: show lyrics for the song that is currently playing.
+
+* use current supabase environment and sql code to execute for this app to work.
