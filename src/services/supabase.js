@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://ydlipcddluppspokcpvq.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_L5-CFrPnH6WJLkJUv1jBKg_QpyK0ghl';
@@ -70,7 +72,7 @@ export const clearGuestUser = () => {
   try {
     // Clear only THIS tab's guest profile
     localStorage.removeItem(getTabSessionKey());
-  } catch (e) {}
+  } catch (e) { }
 };
 
 // ================= AUTH HELPERS =================
@@ -99,13 +101,20 @@ export const authService = {
   },
 
   async signInWithGoogle() {
+    const isNative = Capacitor.isNativePlatform();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: isNative
+          ? 'com.syncbeats.app://auth-callback'
+          : window.location.origin,
+        skipBrowserRedirect: isNative,
       },
     });
     if (error) throw error;
+    if (isNative && data?.url) {
+      await Browser.open({ url: data.url });
+    }
     return data;
   },
 

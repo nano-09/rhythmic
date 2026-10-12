@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, authService, createGuestUser, clearGuestUser, getStoredGuestUser } from '../services/supabase';
+import { Capacitor } from '@capacitor/core';
 
 const AuthContext = createContext(null);
 
@@ -44,13 +45,39 @@ export function AuthProvider({ children }) {
           isGuest: false,
         });
       } else if (event === 'SIGNED_OUT') {
-        const guest = getStoredGuestUser();
-        setUser(guest);
+        setUser(getStoredGuestUser());
       }
     });
 
+    // Native-only: handle the Google OAuth deep-link callback
+    let appListener = null;
+    if (Capacitor.isNativePlatform()) {
+      (async () => {
+        const { App: CapApp } = await import('@capacitor/app');
+        const { Browser } = await import('@capacitor/browser');
+
+        appListener = await CapApp.addListener('appUrlOpen', async ({ url }) => {
+          if (!url.startsWith('com.syncbeats.app://auth-callback')) return;
+          await Browser.close().catch(() => { });
+
+          const u = new URL(url.replace('#', '?'));
+          const code = u.searchParams.get('code');
+          if (code) {
+            await supabase.auth.exchangeCodeForSession(code);
+          } else {
+            const access_token = u.searchParams.get('access_token');
+            const refresh_token = u.searchParams.get('refresh_token');
+            if (access_token && refresh_token) {
+              await supabase.auth.setSession({ access_token, refresh_token });
+            }
+          }
+        });
+      })();
+    }
+
     return () => {
       subscription?.unsubscribe();
+      appListener?.remove();
     };
   }, []);
 
