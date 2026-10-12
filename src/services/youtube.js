@@ -1,4 +1,12 @@
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
+// The API key comes ONLY from the environment. Never hardcode it here.
+const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+
+if (!YOUTUBE_API_KEY) {
+  console.error(
+    '[SyncBeats] VITE_YOUTUBE_API_KEY is not set. YouTube search and song lookups will fail. ' +
+    'Add it to .env and restart the dev server (and set it in your hosting dashboard).'
+  );
+}
 
 export function decodeHtmlEntities(str) {
   const txt = document.createElement('textarea');
@@ -30,6 +38,13 @@ export function extractYouTubeId(url) {
 }
 
 async function fetchWithCapacitorFallback(url) {
+  if (!YOUTUBE_API_KEY) {
+    return {
+      ok: false,
+      data: { error: { code: 400, message: 'VITE_YOUTUBE_API_KEY is not set' } },
+    };
+  }
+
   try {
     const cap = window.Capacitor;
     if (cap) {
@@ -70,16 +85,18 @@ export async function callYouTubeApi(endpoint, params = {}) {
     .join('&');
 
   // 1. Try local Vite dev proxy first (automatically attaches Referer: http://localhost:5173/)
-  try {
-    const proxyUrl = `/api/youtube/${endpoint}?${queryStr}&key=${YOUTUBE_API_KEY}`;
-    const res = await fetch(proxyUrl);
-    if (res.ok) {
-      const data = await res.json();
-      if (!data.error) {
-        return { ok: true, data };
+  if (YOUTUBE_API_KEY) {
+    try {
+      const proxyUrl = `/api/youtube/${endpoint}?${queryStr}&key=${YOUTUBE_API_KEY}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.error) {
+          return { ok: true, data };
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) { }
+  }
 
   // 2. Direct request with Capacitor fallback
   const directUrl = `https://www.googleapis.com/youtube/v3/${endpoint}?${queryStr}&key=${YOUTUBE_API_KEY}`;
@@ -124,7 +141,7 @@ export async function fetchVideoDurations(videoIds) {
   if (!videoIds || videoIds.length === 0) return {};
   const idsStr = videoIds.join(',');
   const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${idsStr}&key=${YOUTUBE_API_KEY}`;
-  
+
   const { ok, data } = await fetchWithCapacitorFallback(videosUrl);
   const durations = {};
   if (ok && data?.items) {

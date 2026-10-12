@@ -1,6 +1,5 @@
-import { extractYouTubeId, getVideoDetails, searchYouTube } from './youtube';
+import { extractYouTubeId, getVideoDetails, searchYouTube, callYouTubeApi } from './youtube';
 
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
 const YT_CACHE_KEY = 'syncbeats_yt_resolved_cache';
 
 function getResolvedCache() {
@@ -15,7 +14,7 @@ function getResolvedCache() {
 function saveResolvedCache(cache) {
   try {
     localStorage.setItem(YT_CACHE_KEY, JSON.stringify(cache));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 const COUNTRY_MAP = {
@@ -119,7 +118,10 @@ export async function getTopTrendingSongs(langFilter = 'all') {
 }
 
 /**
- * Resolves the matching YouTube video ID for an iTunes song.
+ * Resolves the matching YouTube video ID for a song (title + artist).
+ * Used both when adding a track and when playing a track whose id is still pending.
+ * All requests go through callYouTubeApi (dev proxy + Capacitor fallback), and the
+ * API key comes only from VITE_YOUTUBE_API_KEY.
  */
 export async function resolveYouTubeId(track) {
   if (track.youtubeId) return track.youtubeId;
@@ -130,44 +132,47 @@ export async function resolveYouTubeId(track) {
     return cache[cacheKey];
   }
 
-  // 1. First attempt: search with artist and title, ensuring embeddable videos
   const cleanTitle = (track.title || '').replace(/\(.*\)|\[.*\]/g, '').trim();
-  const query = `${cleanTitle} ${track.artist || ''} official audio`.trim();
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
+  const artist = track.artist || '';
+  const queries = [
+    `${cleanTitle} ${artist} official audio`.trim(), // 1. most precise
+    `${cleanTitle} ${artist}`.trim(),                // 2. broader fallback
+  ];
 
-  try {
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      const item = data.items?.[0];
-      if (item && item.id?.videoId) {
-        const vId = item.id.videoId;
+  let lastError = null;
+
+  for (const q of queries) {
+    try {
+      const { ok, data } = await callYouTubeApi('search', {
+        part: 'snippet',
+        type: 'video',
+        videoEmbeddable: 'true',
+        maxResults: 3,
+        q,
+      });
+
+      const vId = ok ? data?.items?.[0]?.id?.videoId : null;
+      if (vId) {
         cache[cacheKey] = vId;
         saveResolvedCache(cache);
         return vId;
       }
-    }
-  } catch (e) {
-    console.warn('First YouTube resolution attempt failed, falling back:', e);
-  }
 
-  // 2. Second fallback attempt: broader title + artist search
-  try {
-    const fallbackUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(`${cleanTitle} ${track.artist || ''}`.trim())}&key=${YOUTUBE_API_KEY}`;
-    const res = await fetch(fallbackUrl);
-    if (res.ok) {
-      const data = await res.json();
-      const item = data.items?.[0];
-      if (item && item.id?.videoId) {
-        const vId = item.id.videoId;
-        cache[cacheKey] = vId;
-        saveResolvedCache(cache);
-        return vId;
+      if (data?.error) {
+        lastError = data.error.message || 'YouTube API error';
+        console.warn('[SyncBeats] YouTube API error:', data.error.code, lastError);
+        // Key / quota / referrer problems won't be fixed by retrying with another query
+        if ([400, 403].includes(data.error.code)) break;
       }
+    } catch (e) {
+      lastError = e.message;
+      console.warn('[SyncBeats] YouTube lookup attempt failed:', e);
     }
-  } catch (e) {
-    console.error('All YouTube resolution attempts failed:', e);
   }
 
-  throw new Error('Unable to find YouTube stream for ' + track.title);
+  throw new Error(
+    lastError
+      ? `YouTube lookup failed: ${lastError}`
+      : 'Unable to find YouTube stream for ' + track.title
+  );
 }

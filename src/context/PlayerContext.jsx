@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, playlistService } from '../services/supabase';
 import { backgroundAudio } from '../services/backgroundAudio';
+import { resolveYouTubeId } from '../services/musicSearch';
 import { useAuth } from './AuthContext';
 
 const PlayerContext = createContext(null);
@@ -32,6 +33,13 @@ export function PlayerProvider({ children }) {
   const channelRef = useRef(null);
   const isSyncingFromRemoteRef = useRef(false);
   const shouldBePlayingRef = useRef(false);
+  // Auto-start request: set when a track is added while nothing is playing
+  const autoStartRef = useRef(null);
+  // Always holds the latest functions/state, so long-lived callbacks
+  // (YouTube player events, realtime channel handlers) never use stale closures
+  const latestRef = useRef({});
+  // Id of the YouTube video currently loaded into the player
+  const loadedVideoIdRef = useRef(null);
 
   // Derived state
   const currentTrack = currentTrackIndex >= 0 && tracks[currentTrackIndex] ? tracks[currentTrackIndex] : null;
@@ -94,7 +102,7 @@ export function PlayerProvider({ children }) {
         if (ytPlayerRef.current && isYtReadyRef.current) {
           try {
             ytPlayerRef.current.playVideo();
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     };
@@ -162,10 +170,10 @@ export function PlayerProvider({ children }) {
             if (pendingPlayRef.current) {
               const { index, autoPlay } = pendingPlayRef.current;
               pendingPlayRef.current = null;
-              selectTrack(index, autoPlay);
+              latestRef.current.selectTrack(index, autoPlay);
             }
           },
-          onStateChange: handleYtStateChange,
+          onStateChange: (e) => latestRef.current.handleYtStateChange(e),
           onError: (e) => {
             console.warn('[YouTube Player Error code]', e.data);
             setIsPlaying(false);
@@ -173,7 +181,7 @@ export function PlayerProvider({ children }) {
             // Error codes: 2=invalid param, 5=html5 error, 100=not found, 101/150=embed blocked
             // Auto-skip to next track on unrecoverable errors
             if ([100, 101, 150].includes(e.data)) {
-              setTimeout(() => handleTrackEnded(), 1500);
+              setTimeout(() => latestRef.current.handleTrackEnded(), 1500);
             }
           },
         },
@@ -206,7 +214,7 @@ export function PlayerProvider({ children }) {
                 currentTime: time,
               });
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       }, 500);
     } else {
@@ -233,7 +241,7 @@ export function PlayerProvider({ children }) {
           if (ytPlayerRef.current && shouldBePlayingRef.current) {
             try {
               ytPlayerRef.current.playVideo();
-            } catch (e) {}
+            } catch (e) { }
           }
         }, 150);
         return;
@@ -298,54 +306,77 @@ export function PlayerProvider({ children }) {
     }
   };
 
-  const resolveAndPlay = async (track, index, autoPlay) => {
-    const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
-    const pendingQuery = decodeURIComponent((track.youtube_id || '').replace('__pending__', ''));
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(pendingQuery)}&key=${YOUTUBE_API_KEY}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const videoId = data.items?.[0]?.id?.videoId;
-        if (videoId) {
-          // Update track in memory state immediately
-          setTracks(prev => prev.map((t, i) => i === index ? { ...t, youtube_id: videoId } : t));
-
-          if (ytPlayerRef.current && isYtReadyRef.current) {
-            try {
-              if (autoPlay) {
-                ytPlayerRef.current.loadVideoById(videoId, 0);
-                setIsPlaying(true);
-              } else {
-                ytPlayerRef.current.cueVideoById(videoId, 0);
-                setIsPlaying(false);
-              }
-            } catch (err) {
-              console.error('Error starting resolved video:', err);
-            }
-          } else {
-            pendingPlayRef.current = { index, autoPlay };
-          }
-
-          // Patch in Supabase
-          try {
-            const { supabase: sb } = await import('../services/supabase');
-            await sb.from('playlist_tracks').update({ youtube_id: videoId }).eq('id', track.id);
-          } catch (dbErr) {
-            console.warn('Could not patch resolved youtube_id in Supabase:', dbErr);
-          }
-          return;
+  // After asking YouTube to autoplay, check that it really started. Browsers
+  // (especially iOS Safari) can silently block autoplay that isn't directly
+  // triggered by a tap. If blocked, reset the UI to "paused" so one tap on Play works.
+  const watchPlaybackStart = () => {
+    setTimeout(() => {
+      try {
+        const p = ytPlayerRef.current;
+        if (!p || !shouldBePlayingRef.current || !window.YT) return;
+        const st = p.getPlayerState();
+        if (st !== window.YT.PlayerState.PLAYING && st !== window.YT.PlayerState.BUFFERING) {
+          console.warn('[SyncBeats] Playback did not start (player state ' + st + '). Autoplay was probably blocked by the browser. Tap Play.');
+          setIsPlaying(false);
         }
+      } catch (e) { }
+    }, 3000);
+  };
+
+  const resolveAndPlay = async (track, index, autoPlay) => {
+    try {
+      const videoId = await resolveYouTubeId({ title: track.title, artist: track.artist });
+
+      // Update the track in memory (match by id in case the list changed meanwhile)
+      setTracks(prev => prev.map((t) => (t.id === track.id ? { ...t, youtube_id: videoId } : t)));
+
+      // Save the resolved id so nobody has to look it up again
+      supabase
+        .from('playlist_tracks')
+        .update({ youtube_id: videoId })
+        .eq('id', track.id)
+        .then(({ error }) => {
+          if (error) console.warn('[SyncBeats] Could not save resolved youtube_id:', error.message);
+        });
+
+      // The user may have skipped to another track while we were resolving
+      if (latestRef.current.currentTrackIndex !== index) {
+        console.log('[SyncBeats] Track changed while resolving; not starting it.');
+        return;
       }
-      console.warn('Could not resolve YouTube ID for:', track.title);
+
+      if (ytPlayerRef.current && isYtReadyRef.current) {
+        try {
+          loadedVideoIdRef.current = videoId;
+          if (autoPlay) {
+            ytPlayerRef.current.loadVideoById(videoId, 0);
+            setIsPlaying(true);
+            watchPlaybackStart();
+          } else {
+            ytPlayerRef.current.cueVideoById(videoId, 0);
+            setIsPlaying(false);
+          }
+        } catch (err) {
+          console.error('[SyncBeats] Error starting resolved video:', err);
+        }
+      } else {
+        pendingPlayRef.current = { index, autoPlay };
+      }
     } catch (e) {
-      console.warn('Failed to resolve pending YouTube ID:', e);
+      console.error('[SyncBeats] Could not find a YouTube video for "' + track.title + '":', e.message);
     }
   };
 
   const selectTrack = (index, autoPlay = true) => {
     if (index < 0 || index >= tracks.length) return;
     const track = tracks[index];
+    console.log('[SyncBeats] selectTrack', {
+      index,
+      title: track.title,
+      youtube_id: track.youtube_id,
+      autoPlay,
+      playerReady: !!(ytPlayerRef.current && isYtReadyRef.current),
+    });
     setCurrentTrackIndex(index);
     setCurrentTime(0);
     setDuration(track.duration || 0);
@@ -372,10 +403,12 @@ export function PlayerProvider({ children }) {
       if (track.youtube_id?.startsWith('__pending__')) {
         resolveAndPlay(track, index, autoPlay);
       } else if (track.youtube_id) {
+        loadedVideoIdRef.current = track.youtube_id;
         try {
           if (autoPlay) {
             ytPlayerRef.current.loadVideoById(track.youtube_id, 0);
             setIsPlaying(true);
+            watchPlaybackStart();
           } else {
             ytPlayerRef.current.cueVideoById(track.youtube_id, 0);
             setIsPlaying(false);
@@ -383,6 +416,8 @@ export function PlayerProvider({ children }) {
         } catch (e) {
           console.error('Error loading video:', e);
         }
+      } else {
+        console.warn('[SyncBeats] Track has no youtube_id, cannot play:', track.title);
       }
     } else {
       pendingPlayRef.current = { index, autoPlay };
@@ -404,6 +439,19 @@ export function PlayerProvider({ children }) {
   const play = () => {
     if (currentTrackIndex === -1 && tracks.length > 0) {
       selectTrack(0, true);
+      return;
+    }
+
+    // The selected track may never have been loaded into the YouTube player
+    // (e.g. the index was restored from the room state when joining). Load it first.
+    const selected = tracks[currentTrackIndex];
+    if (
+      selected &&
+      ytPlayerRef.current &&
+      isYtReadyRef.current &&
+      loadedVideoIdRef.current !== selected.youtube_id
+    ) {
+      selectTrack(currentTrackIndex, true);
       return;
     }
 
@@ -536,27 +584,28 @@ export function PlayerProvider({ children }) {
     });
 
     channel.on('broadcast', { event: 'playback_sync' }, ({ payload }) => {
+      const L = latestRef.current;
       if (!payload || payload.senderId === user?.id) return;
       if (currentPlaylist.type === 'playlist') return;
 
       isSyncingFromRemoteRef.current = true;
 
       if (payload.action === 'CHANGE_TRACK') {
-        if (payload.trackIndex !== currentTrackIndex) {
-          selectTrack(payload.trackIndex, payload.isPlaying);
+        if (payload.trackIndex !== L.currentTrackIndex) {
+          L.selectTrack(payload.trackIndex, payload.isPlaying);
         }
       } else if (payload.action === 'PLAY') {
-        if (!isPlaying) play();
-        if (Math.abs(currentTime - payload.currentTime) > 2) {
-          seekTo(payload.currentTime);
+        if (!L.isPlaying) L.play();
+        if (Math.abs(L.currentTime - payload.currentTime) > 2) {
+          L.seekTo(payload.currentTime);
         }
       } else if (payload.action === 'PAUSE') {
-        if (isPlaying) pause();
-        if (Math.abs(currentTime - payload.currentTime) > 2) {
-          seekTo(payload.currentTime);
+        if (L.isPlaying) L.pause();
+        if (Math.abs(L.currentTime - payload.currentTime) > 2) {
+          L.seekTo(payload.currentTime);
         }
       } else if (payload.action === 'SEEK') {
-        seekTo(payload.currentTime);
+        L.seekTo(payload.currentTime);
       }
 
       setTimeout(() => {
@@ -568,7 +617,7 @@ export function PlayerProvider({ children }) {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'playlist_tracks', filter: `playlist_id=eq.${currentPlaylist.id}` },
       () => {
-        refreshTracks(currentPlaylist.id);
+        latestRef.current.refreshTracks(currentPlaylist.id);
       }
     );
 
@@ -586,7 +635,7 @@ export function PlayerProvider({ children }) {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'playlist_members', filter: `playlist_id=eq.${currentPlaylist.id}` },
       () => {
-        refreshMembers(currentPlaylist.id);
+        latestRef.current.refreshMembers(currentPlaylist.id);
       }
     );
 
@@ -624,7 +673,7 @@ export function PlayerProvider({ children }) {
             idMap.forEach(t => sorted.push(t));
             setTracks(sorted);
             return;
-          } catch (_) {}
+          } catch (_) { }
         }
       }
       setTracks(data);
@@ -637,9 +686,9 @@ export function PlayerProvider({ children }) {
     if (!canReorderTracks()) return;
 
     // Maintain currently playing track index accurately
-    const currentTrack = tracks[currentTrackIndex];
-    if (currentTrack) {
-      const newIdx = newOrderedTracks.findIndex(t => t.id === currentTrack.id);
+    const playingTrack = tracks[currentTrackIndex];
+    if (playingTrack) {
+      const newIdx = newOrderedTracks.findIndex(t => t.id === playingTrack.id);
       if (newIdx !== -1) {
         setCurrentTrackIndex(newIdx);
       }
@@ -705,11 +754,41 @@ export function PlayerProvider({ children }) {
       await playlistService.leaveMember(currentPlaylist.id, user.id);
     }
     pause();
+    autoStartRef.current = null;
+    loadedVideoIdRef.current = null;
     setCurrentPlaylist(null);
     setTracks([]);
     setMembers([]);
     setCurrentTrackIndex(-1);
   };
+
+  // Ask the context to start the NEXT track that appears in the queue
+  // (used right after adding a song). requestAutoStart(false) cancels.
+  // The new track is found by comparing track ids, not by position.
+  const requestAutoStart = (shouldStart = true) => {
+    autoStartRef.current = shouldStart
+      ? { knownIds: new Set(tracks.map(t => t.id)), createdAt: Date.now() }
+      : null;
+  };
+
+  // Fires after `tracks` updates; starts the newly added track using fresh state
+  useEffect(() => {
+    const req = autoStartRef.current;
+    if (!req) return;
+    if (Date.now() - req.createdAt > 30000) {
+      autoStartRef.current = null; // expired
+      return;
+    }
+    const newIndex = tracks.findIndex(t => !req.knownIds.has(t.id));
+    if (newIndex === -1) return; // new track hasn't arrived yet
+    autoStartRef.current = null;
+    if (!canControlPlayback()) {
+      console.log('[SyncBeats] Auto-start skipped: this user cannot control playback in this room.');
+      return;
+    }
+    console.log('[SyncBeats] Auto-starting newly added track:', tracks[newIndex].title);
+    selectTrack(newIndex, true);
+  }, [tracks]);
 
   const HISTORY_KEY = 'syncbeats_playlist_history';
   const getJoinedHistory = () => {
@@ -765,6 +844,21 @@ export function PlayerProvider({ children }) {
     }
   };
 
+  // Keep the latest functions/state available to long-lived callbacks
+  latestRef.current = {
+    selectTrack,
+    play,
+    pause,
+    seekTo,
+    handleTrackEnded,
+    handleYtStateChange,
+    refreshTracks,
+    refreshMembers,
+    currentTrackIndex,
+    isPlaying,
+    currentTime,
+  };
+
   return (
     <PlayerContext.Provider
       value={{
@@ -803,6 +897,7 @@ export function PlayerProvider({ children }) {
         removeFromJoinedHistory,
         cleanJoinedHistory,
         canReorderTracks,
+        requestAutoStart,
       }}
     >
       {children}

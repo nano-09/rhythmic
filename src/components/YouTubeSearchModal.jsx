@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  X, Search, Plus, Check, Clock, Music, AlertCircle, 
+import {
+  X, Search, Plus, Check, Clock, Music, AlertCircle,
   Flame, Play, Pause, Globe, Sparkles, ChevronDown
 } from 'lucide-react';
 import { searchMusic, getTopTrendingSongs, resolveYouTubeId } from '../services/musicSearch';
@@ -21,7 +21,7 @@ const SONG_LANGUAGES = [
 
 export default function YouTubeSearchModal({ isOpen, onClose }) {
   const { user } = useAuth();
-  const { currentPlaylist, tracks, refreshTracks } = usePlayer();
+  const { currentPlaylist, tracks, refreshTracks, isPlaying, currentTrack, requestAutoStart } = usePlayer();
   const { language: appLang, t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState('search'); // 'search' | 'trending'
@@ -50,7 +50,7 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
     try {
       const hits = await getTopTrendingSongs(lang);
       setTrending(hits);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const handleSearch = async (searchTerm, lang = songLang) => {
@@ -102,7 +102,7 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
       audio.volume = 0.8;
       audio.onended = () => setPreviewTrackId(null);
       audio.onerror = () => setPreviewTrackId(null);
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
       audioPreviewRef.current = audio;
       setPreviewTrackId(track.id);
     }
@@ -139,6 +139,12 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
         }
       }
 
+      // If nothing is playing, ask the player to start this track
+      // as soon as it appears in the refreshed queue.
+      if (!isPlaying || !currentTrack) {
+        requestAutoStart();
+      }
+
       await playlistService.addTrack({
         playlistId: currentPlaylist.id,
         track: {
@@ -155,6 +161,7 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
       setAddedIds(prev => new Set(prev).add(item.id));
       await refreshTracks(currentPlaylist.id);
     } catch (err) {
+      requestAutoStart(false); // cancel any pending auto-start if adding failed
       console.error('Error adding track:', err);
       alert('Failed to add track: ' + err.message);
     } finally {
@@ -169,7 +176,7 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div className="relative w-full sm:max-w-xl max-h-[92vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl glass-panel shadow-2xl border border-white/10 border-b-0 sm:border-b flex flex-col overflow-hidden">
-        
+
         {/* Glow ambient */}
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -202,11 +209,10 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={() => setActiveTab('search')}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${
-                activeTab === 'search'
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${activeTab === 'search'
                   ? 'bg-violet-600 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               <Search className="w-3 h-3" />
               <span>{t('search_title')}</span>
@@ -214,11 +220,10 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={() => { setActiveTab('trending'); loadTrending(songLang); }}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${
-                activeTab === 'trending'
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${activeTab === 'trending'
                   ? 'bg-gradient-to-r from-pink-600 to-violet-600 text-white shadow'
                   : 'text-zinc-400 hover:text-white'
-              }`}
+                }`}
             >
               <Flame className="w-3 h-3 text-amber-300" />
               <span>{t('top_hits')}</span>
@@ -233,11 +238,10 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
                 type="button"
                 onClick={() => handleLanguageChange(sl.code)}
                 title={t(sl.label)}
-                className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
-                  songLang === sl.code
+                className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${songLang === sl.code
                     ? 'bg-violet-600 text-white shadow'
                     : 'text-zinc-400 hover:text-white'
-                }`}
+                  }`}
               >
                 <span>{sl.icon}</span>
                 <span className="hidden sm:inline">{sl.short}</span>
@@ -334,11 +338,10 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
                       <button
                         type="button"
                         onClick={() => handlePreviewToggle(item)}
-                        className={`absolute inset-0 flex items-center justify-center transition-all ${
-                          isPreviewing
+                        className={`absolute inset-0 flex items-center justify-center transition-all ${isPreviewing
                             ? 'bg-violet-600/80 text-white'
                             : 'bg-black/40 opacity-0 group-hover:opacity-100 text-white'
-                        }`}
+                          }`}
                         title={isPreviewing ? 'Stop Preview' : t('preview_30s')}
                       >
                         {isPreviewing ? (
@@ -370,13 +373,12 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
                   <button
                     onClick={() => handleAddTrack(item)}
                     disabled={isAdded || isResolving}
-                    className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 shrink-0 transition-all ${
-                      isAdded
+                    className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 shrink-0 transition-all ${isAdded
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : isResolving
-                        ? 'bg-violet-600/40 text-violet-200'
-                        : 'bg-violet-600 hover:bg-violet-500 text-white shadow-sm'
-                    }`}
+                          ? 'bg-violet-600/40 text-violet-200'
+                          : 'bg-violet-600 hover:bg-violet-500 text-white shadow-sm'
+                      }`}
                   >
                     {isResolving ? (
                       <span className="animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
