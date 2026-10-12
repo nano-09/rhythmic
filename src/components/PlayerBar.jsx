@@ -46,7 +46,7 @@ export default function PlayerBar({ onOpenLyrics }) {
   return (
     <>
       {/* Mini Player Bar at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-white/10 px-4 py-2.5 transition-all">
+      <div className="fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-white/10 px-3 sm:px-4 py-2 sm:py-2.5 transition-all">
         {/* Progress Bar Top Line */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-white/10 group cursor-pointer">
           <div
@@ -57,14 +57,14 @@ export default function PlayerBar({ onOpenLyrics }) {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           
           {/* Left: Track Info */}
           <div 
             onClick={() => setIsExpanded(true)}
-            className="flex items-center gap-3 min-w-0 max-w-[35%] sm:max-w-[30%] cursor-pointer group"
+            className="flex items-center gap-2 sm:gap-3 min-w-0 max-w-[42%] sm:max-w-[30%] cursor-pointer group"
           >
-            <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10 shadow-md">
+            <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10 shadow-md">
               <img
                 src={currentTrack.thumbnail || '/icon-192.png'}
                 alt={currentTrack.title}
@@ -83,7 +83,7 @@ export default function PlayerBar({ onOpenLyrics }) {
               <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-violet-300 transition-colors">
                 {currentTrack.title}
               </h4>
-              <p className="text-[11px] text-zinc-400 truncate mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate mt-0.5">
                 {currentTrack.artist || 'Unknown'}
               </p>
             </div>
@@ -91,12 +91,12 @@ export default function PlayerBar({ onOpenLyrics }) {
 
           {/* Center: Controls & Scrubber */}
           <div className="flex-1 max-w-xl flex flex-col items-center">
-            <div className="flex items-center gap-3 sm:gap-5">
-              {/* Shuffle */}
+            <div className="flex items-center gap-2 sm:gap-5">
+              {/* Shuffle (desktop/expanded) */}
               <button
                 onClick={toggleShuffle}
                 title={`${t('shuffle')}: ${isShuffle ? 'On' : 'Off'}`}
-                className={`p-1.5 rounded-lg transition-all ${
+                className={`hidden sm:block p-1.5 rounded-lg transition-all ${
                   isShuffle ? 'text-pink-400 bg-pink-500/10' : 'text-zinc-500 hover:text-white'
                 }`}
               >
@@ -107,21 +107,21 @@ export default function PlayerBar({ onOpenLyrics }) {
               <button
                 onClick={playPreviousTrack}
                 disabled={!hasControl}
-                className="p-1.5 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors"
+                className="p-1 sm:p-1.5 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors"
               >
-                <SkipBack className="w-5 h-5 fill-current" />
+                <SkipBack className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               </button>
 
               {/* Play / Pause */}
               <button
                 onClick={togglePlay}
                 disabled={!hasControl}
-                className="w-10 h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 disabled:opacity-40 transition-all"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-zinc-950 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 disabled:opacity-40 transition-all shrink-0"
               >
                 {isPlaying ? (
-                  <Pause className="w-5 h-5 fill-current" />
+                  <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                 ) : (
-                  <Play className="w-5 h-5 fill-current ml-0.5" />
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
                 )}
               </button>
 
@@ -129,16 +129,16 @@ export default function PlayerBar({ onOpenLyrics }) {
               <button
                 onClick={playNextTrack}
                 disabled={!hasControl}
-                className="p-1.5 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors"
+                className="p-1 sm:p-1.5 text-zinc-300 hover:text-white disabled:opacity-30 transition-colors"
               >
-                <SkipForward className="w-5 h-5 fill-current" />
+                <SkipForward className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               </button>
 
-              {/* Loop */}
+              {/* Loop (desktop/expanded) */}
               <button
                 onClick={toggleLoop}
                 title={`${t('loop')}: ${loopMode}`}
-                className={`p-1.5 rounded-lg transition-all ${
+                className={`hidden sm:block p-1.5 rounded-lg transition-all ${
                   loopMode !== 'off' ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-500 hover:text-white'
                 }`}
               >

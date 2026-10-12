@@ -87,30 +87,30 @@ export default function PlaylistList({ onOpenCreate, onOpenJoin }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-10 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 space-y-6 sm:space-y-10 animate-fade-in pb-28">
       
       {/* Hero Header */}
-      <div className="relative rounded-3xl p-8 sm:p-10 overflow-hidden glass-panel border border-white/10 shadow-2xl">
+      <div className="relative rounded-3xl p-5 sm:p-10 overflow-hidden glass-panel border border-white/10 shadow-2xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-pink-500/20 via-violet-600/20 to-transparent rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-300 text-xs font-semibold mb-4 border border-violet-500/30">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-300 text-xs font-semibold mb-3 sm:mb-4 border border-violet-500/30">
             <Radio className="w-3.5 h-3.5 text-pink-400 animate-pulse" />
             <span>{t('hero_badge')}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight whitespace-pre-line">
+          <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-snug whitespace-pre-line">
             <span className="bg-gradient-to-r from-violet-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
               {t('hero_title')}
             </span>
           </h2>
-          <p className="mt-3 text-sm text-zinc-300 leading-relaxed">
+          <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm text-zinc-300 leading-relaxed">
             {t('hero_desc')}
           </p>
 
           {/* Call to Actions */}
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
             <button
               onClick={onOpenCreate}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white text-sm font-bold shadow-lg shadow-violet-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-violet-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>{t('create_playlist')}</span>
@@ -118,7 +118,7 @@ export default function PlaylistList({ onOpenCreate, onOpenJoin }) {
 
             <button
               onClick={onOpenJoin}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl glass-button text-white text-sm font-semibold hover:border-cyan-500/40 hover:bg-white/10 transition-all"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 sm:py-3 rounded-2xl glass-button text-white text-xs sm:text-sm font-semibold hover:border-cyan-500/40 hover:bg-white/10 transition-all"
             >
               <KeyRound className="w-4 h-4 text-cyan-400" />
               <span>{t('join_with_code')}</span>

@@ -25,20 +25,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0b10] text-zinc-100 flex flex-col selection:bg-violet-500 selection:text-white">
-      {/* Hidden YouTube IFrame Player */}
-      <div
-        id="youtube-hidden-player"
-        style={{
-          position: 'fixed',
-          top: '-9999px',
-          left: '-9999px',
-          width: '1px',
-          height: '1px',
-          opacity: 0,
-          pointerEvents: 'none',
-        }}
-      />
-
       {/* Navigation Header */}
       <Header
         onOpenAuth={() => setIsAuthOpen(true)}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Search, Plus, Check, Clock, Music, AlertCircle, 
-  Flame, Play, Pause, Globe, Sparkles 
+  Flame, Play, Pause, Globe, Sparkles, ChevronDown
 } from 'lucide-react';
 import { searchMusic, getTopTrendingSongs, resolveYouTubeId } from '../services/musicSearch';
 import { formatTime } from '../services/youtube';
@@ -13,10 +13,10 @@ import { useLanguage } from '../context/LanguageContext';
 const GENRE_TAGS = ['Pop', 'Hip-Hop', 'R&B', 'Rock', 'Electronic', 'K-Pop', 'J-Pop', 'Lo-Fi'];
 
 const SONG_LANGUAGES = [
-  { code: 'all', label: 'all_languages', icon: '🌐' },
-  { code: 'ja', label: 'lang_japanese', icon: '🇯🇵' },
-  { code: 'ko', label: 'lang_korean', icon: '🇰🇷' },
-  { code: 'en', label: 'lang_english', icon: '🇺🇸' },
+  { code: 'all', label: 'all_languages', icon: '🌐', short: 'ALL' },
+  { code: 'ja', label: 'lang_japanese', icon: '🇯🇵', short: 'JA' },
+  { code: 'ko', label: 'lang_korean', icon: '🇰🇷', short: 'KO' },
+  { code: 'en', label: 'lang_english', icon: '🇺🇸', short: 'EN' },
 ];
 
 export default function YouTubeSearchModal({ isOpen, onClose }) {
@@ -25,7 +25,6 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
   const { language: appLang, t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState('search'); // 'search' | 'trending'
-  // Default search language to app language
   const [songLang, setSongLang] = useState('all');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -64,6 +63,7 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
     try {
       const items = await searchMusic(term.trim(), lang);
       setResults(items);
+      setActiveTab('search');
       if (items.length === 0) {
         setErrorMsg(t('no_results'));
       }
@@ -86,7 +86,6 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
 
   const handleGenreClick = (genre) => {
     setQuery(genre);
-    setActiveTab('search');
     handleSearch(genre, songLang);
   };
 
@@ -123,28 +122,20 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
     stopPreview();
 
     try {
-      // If it's a direct YouTube URL paste, youtube ID is already known
       let ytId = item.youtubeId || null;
 
-      // For direct YouTube items, youtubeId is already set — add immediately
-      // For iTunes items, add with a placeholder and resolve in background
       if (!ytId && !item.isDirectYouTube) {
-        // Try to resolve quickly (2s timeout), but don't block the add
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), 6000)
+          );
           ytId = await Promise.race([
             resolveYouTubeId(item),
-            new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('timeout')), 3000)
-            ),
+            timeoutPromise,
           ]);
-          clearTimeout(timeoutId);
         } catch (resolveErr) {
-          // Use a search-query placeholder so the track still gets added
-          // The player will attempt to resolve again when the user plays it
           ytId = '__pending__' + encodeURIComponent(`${item.title} ${item.artist}`);
-          console.warn('YouTube resolution timed out, using pending placeholder:', resolveErr.message);
+          console.warn('YouTube resolution fallback to pending:', resolveErr.message);
         }
       }
 
@@ -176,123 +167,150 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
   const currentDisplayList = activeTab === 'trending' ? trending : results;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-xl max-h-[90vh] rounded-3xl glass-panel p-5 sm:p-6 shadow-2xl border border-white/10 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+      <div className="relative w-full sm:max-w-xl max-h-[92vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl glass-panel shadow-2xl border border-white/10 border-b-0 sm:border-b flex flex-col overflow-hidden">
         
         {/* Glow ambient */}
-        <div className="absolute -top-20 -right-20 w-48 h-48 bg-pink-600/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Close Button */}
-        <button
-          onClick={() => { stopPreview(); onClose(); }}
-          className="absolute top-4 right-4 p-2 rounded-xl text-zinc-400 hover:text-white glass-button"
-        >
-          <X className="w-4 h-4" />
-        </button>
-
-        {/* Header */}
-        <div className="mb-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
-              iTunes & YouTube Engine
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2 mt-1">
-            <Music className="w-5 h-5 text-pink-400" />
-            {t('search_title')}
-          </h2>
-          <p className="text-xs text-zinc-400">
-            {t('search_desc')}
-          </p>
+        {/* Drag Handle (mobile) */}
+        <div className="flex justify-center pt-2.5 pb-0 sm:hidden shrink-0">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
 
-        {/* Song Language Filter Selector */}
-        <div className="flex items-center gap-1.5 mb-3 p-1 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto scrollbar-none shrink-0 text-xs">
-          {SONG_LANGUAGES.map((sl) => (
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-white/5 shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center border border-pink-500/30 shrink-0">
+              <Music className="w-3.5 h-3.5" />
+            </div>
+            <h2 className="text-sm font-bold text-white">{t('search_title')}</h2>
+          </div>
+
+          <button
+            onClick={() => { stopPreview(); onClose(); }}
+            className="p-1.5 rounded-xl text-zinc-400 hover:text-white glass-button"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Compact Filter Bar: Tabs + Language in one row */}
+        <div className="flex items-center gap-2 px-4 py-2 shrink-0">
+          {/* Tab Toggle */}
+          <div className="flex p-0.5 bg-white/5 rounded-xl border border-white/10 shrink-0">
             <button
-              key={sl.code}
               type="button"
-              onClick={() => handleLanguageChange(sl.code)}
-              className={`flex-1 min-w-[85px] py-2 px-3 rounded-xl font-semibold flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap transition-all ${
-                songLang === sl.code
-                  ? 'bg-violet-600 text-white shadow-md'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              onClick={() => setActiveTab('search')}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${
+                activeTab === 'search'
+                  ? 'bg-violet-600 text-white shadow'
+                  : 'text-zinc-400 hover:text-white'
               }`}
             >
-              <span>{sl.icon}</span>
-              <span>{t(sl.label)}</span>
+              <Search className="w-3 h-3" />
+              <span>{t('search_title')}</span>
             </button>
-          ))}
-        </div>
-
-        {/* Search Input Bar */}
-        <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex gap-2 mb-3 shrink-0">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              autoFocus
-              placeholder={t('search_placeholder')}
-              value={query}
-              onChange={(e) => { setQuery(e.target.value); setActiveTab('search'); }}
-              className="w-full glass-input rounded-xl pl-10 pr-4 py-2.5 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !query.trim()}
-            className="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-sm shadow-md transition-all disabled:opacity-50 shrink-0"
-          >
-            {loading ? t('searching') : t('search_btn')}
-          </button>
-        </form>
-
-        {/* Tabs & Genre Filter Pills */}
-        <div className="flex items-center gap-2 mb-3 overflow-x-auto py-1 scrollbar-none shrink-0 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab('trending')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold shrink-0 whitespace-nowrap transition-all ${
-              activeTab === 'trending'
-                ? 'bg-gradient-to-r from-pink-600 to-violet-600 text-white shadow-md'
-                : 'glass-button text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>{t('top_hits')}</span>
-          </button>
-
-          <span className="text-zinc-600 shrink-0 select-none">|</span>
-
-          {GENRE_TAGS.map((genre) => (
             <button
-              key={genre}
               type="button"
-              onClick={() => handleGenreClick(genre)}
-              className="px-3 py-1.5 rounded-xl glass-button text-zinc-400 hover:text-white text-xs font-medium shrink-0 whitespace-nowrap transition-all hover:border-violet-500/40"
+              onClick={() => { setActiveTab('trending'); loadTrending(songLang); }}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-all ${
+                activeTab === 'trending'
+                  ? 'bg-gradient-to-r from-pink-600 to-violet-600 text-white shadow'
+                  : 'text-zinc-400 hover:text-white'
+              }`}
             >
-              {genre}
+              <Flame className="w-3 h-3 text-amber-300" />
+              <span>{t('top_hits')}</span>
             </button>
-          ))}
+          </div>
+
+          {/* Language Pills */}
+          <div className="flex items-center gap-1 p-0.5 bg-white/5 rounded-xl border border-white/10 flex-1 justify-around">
+            {SONG_LANGUAGES.map((sl) => (
+              <button
+                key={sl.code}
+                type="button"
+                onClick={() => handleLanguageChange(sl.code)}
+                title={t(sl.label)}
+                className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-all ${
+                  songLang === sl.code
+                    ? 'bg-violet-600 text-white shadow'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <span>{sl.icon}</span>
+                <span className="hidden sm:inline">{sl.short}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* Search Input (Search tab only) */}
+        {activeTab === 'search' && (
+          <div className="px-4 pb-2 shrink-0">
+            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder={t('search_placeholder')}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full glass-input rounded-xl pl-8 pr-3 py-2 text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !query.trim()}
+                className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md transition-all disabled:opacity-50 shrink-0"
+              >
+                {loading ? '...' : t('search_btn')}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Genre Chips (Trending tab) */}
+        {activeTab === 'trending' && (
+          <div className="px-4 pb-2 shrink-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
+              {GENRE_TAGS.map((genre) => (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => handleGenreClick(genre)}
+                  className="px-2.5 py-1 rounded-lg glass-button text-zinc-400 hover:text-white text-[11px] font-medium shrink-0 whitespace-nowrap transition-all"
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
         {errorMsg && (
-          <div className="mb-3 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mx-4 mb-2 p-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Results List */}
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-1.5 custom-scrollbar">
           {loading ? (
-            <div className="py-20 text-center">
-              <span className="animate-spin inline-block w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full" />
-              <p className="text-xs text-zinc-400 mt-2">{t('searching')}</p>
+            <div className="py-12 text-center">
+              <span className="animate-spin inline-block w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full" />
+              <p className="text-xs text-zinc-500 mt-2">{t('searching')}</p>
             </div>
           ) : currentDisplayList.length === 0 ? (
-            <div className="py-20 text-center text-xs text-zinc-500">
-              {activeTab === 'trending' ? t('searching') : t('search_desc')}
+            <div className="py-12 text-center">
+              <Music className="w-10 h-10 text-zinc-700 mx-auto mb-2" />
+              <p className="text-xs text-zinc-500">
+                {activeTab === 'trending' ? t('searching') : t('search_desc')}
+              </p>
             </div>
           ) : (
             currentDisplayList.map((item) => {
@@ -303,90 +321,69 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
               return (
                 <div
                   key={item.id}
-                  className="p-2.5 rounded-2xl glass-card flex items-center justify-between gap-3 group transition-all"
+                  className="p-2.5 rounded-2xl glass-card flex items-center gap-2.5 group transition-all"
                 >
-                  {/* Left: Thumbnail & Song Info */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10 shadow-md">
-                      <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Thumbnail */}
+                  <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10 shadow-sm">
+                    <img
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {item.previewUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handlePreviewToggle(item)}
+                        className={`absolute inset-0 flex items-center justify-center transition-all ${
+                          isPreviewing
+                            ? 'bg-violet-600/80 text-white'
+                            : 'bg-black/40 opacity-0 group-hover:opacity-100 text-white'
+                        }`}
+                        title={isPreviewing ? 'Stop Preview' : t('preview_30s')}
+                      >
+                        {isPreviewing ? (
+                          <Pause className="w-3.5 h-3.5 fill-current" />
+                        ) : (
+                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                        )}
+                      </button>
+                    )}
+                  </div>
 
-                      {/* 30-sec Audio Preview Button Overlay */}
-                      {item.previewUrl && (
-                        <button
-                          type="button"
-                          onClick={() => handlePreviewToggle(item)}
-                          className={`absolute inset-0 flex items-center justify-center transition-all ${
-                            isPreviewing
-                              ? 'bg-violet-600/70 text-white'
-                              : 'bg-black/40 opacity-0 group-hover:opacity-100 text-white hover:bg-black/60'
-                          }`}
-                          title={isPreviewing ? 'Stop Preview' : t('preview_30s')}
-                        >
-                          {isPreviewing ? (
-                            <Pause className="w-4 h-4 fill-current" />
-                          ) : (
-                            <Play className="w-4 h-4 fill-current ml-0.5" />
-                          )}
-                        </button>
+                  {/* Song Info */}
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-bold text-white truncate group-hover:text-violet-300 transition-colors">
+                      {item.title}
+                    </h4>
+                    <div className="flex items-center gap-1 text-[10px] text-zinc-500 mt-0.5">
+                      <span className="truncate">{item.artist}</span>
+                      {item.duration > 0 && (
+                        <>
+                          <span>·</span>
+                          <span className="font-mono shrink-0">{formatTime(item.duration)}</span>
+                        </>
                       )}
-                    </div>
-
-                    <div className="min-w-0">
-                      <h4 className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-violet-300 transition-colors">
-                        {item.title}
-                      </h4>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
-                        <span className="truncate">{item.artist}</span>
-                        {item.duration > 0 && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1 font-mono text-zinc-500">
-                              <Clock className="w-3 h-3" />
-                              {formatTime(item.duration)}
-                            </span>
-                          </>
-                        )}
-                        {item.genre && (
-                          <>
-                            <span>•</span>
-                            <span className="text-[10px] text-zinc-500 font-medium">{item.genre}</span>
-                          </>
-                        )}
-                      </div>
                     </div>
                   </div>
 
-                  {/* Right: Add to Playlist Action */}
+                  {/* Add Button */}
                   <button
                     onClick={() => handleAddTrack(item)}
                     disabled={isAdded || isResolving}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 shrink-0 transition-all ${
+                    className={`p-2 rounded-xl text-xs font-semibold flex items-center gap-1 shrink-0 transition-all ${
                       isAdded
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : isResolving
                         ? 'bg-violet-600/40 text-violet-200'
-                        : 'bg-violet-600 hover:bg-violet-500 text-white shadow-md'
+                        : 'bg-violet-600 hover:bg-violet-500 text-white shadow-sm'
                     }`}
                   >
                     {isResolving ? (
-                      <>
-                        <span className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full" />
-                        <span>{t('syncing')}</span>
-                      </>
+                      <span className="animate-spin w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full" />
                     ) : isAdded ? (
-                      <>
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{t('added')}</span>
-                      </>
+                      <Check className="w-3.5 h-3.5" />
                     ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>{t('add')}</span>
-                      </>
+                      <Plus className="w-3.5 h-3.5" />
                     )}
                   </button>
                 </div>
@@ -394,7 +391,6 @@ export default function YouTubeSearchModal({ isOpen, onClose }) {
             })
           )}
         </div>
-
       </div>
     </div>
   );

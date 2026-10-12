@@ -63,15 +63,15 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 space-y-6 animate-fade-in pb-32">
+    <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 animate-fade-in pb-28 sm:pb-32">
 
       {/* Room Header Card */}
-      <div className="relative rounded-3xl p-6 sm:p-8 overflow-hidden glass-panel border border-white/10 shadow-2xl">
+      <div className="relative rounded-3xl p-4 sm:p-8 overflow-hidden glass-panel border border-white/10 shadow-2xl">
         <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-violet-600/20 via-pink-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
               <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full ${currentPlaylist.type === 'party'
                 ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30'
                 : currentPlaylist.type === 'jam'
@@ -99,11 +99,11 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
               )}
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight">
               {currentPlaylist.name}
             </h2>
 
-            <div className="flex items-center gap-2 text-xs text-zinc-400 mt-1.5">
+            <div className="flex items-center gap-2 text-xs text-zinc-400 mt-1">
               <span className="flex items-center gap-1 text-amber-300 font-semibold">
                 <Crown className="w-3.5 h-3.5" /> {t('host_prefix')}: {currentPlaylist.host_name}
               </span>
@@ -116,25 +116,25 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
           <div className="flex items-center gap-2 self-start sm:self-center">
             <button
               onClick={onOpenMembers}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass-button text-xs font-semibold text-zinc-200 hover:text-white"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-button text-xs font-semibold text-zinc-200 hover:text-white"
             >
-              <Users className="w-4 h-4 text-violet-400" />
+              <Users className="w-3.5 h-3.5 text-violet-400" />
               <span>{t('members')} ({members.length})</span>
             </button>
 
             <button
               onClick={leaveRoom}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass-button text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-button text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:border-red-500/30"
               title={t('leave_room')}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               <span>{t('leave_room')}</span>
             </button>
           </div>
         </div>
 
         {/* Mode Info Bar */}
-        <div className="mt-5 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-zinc-400">
+        <div className="mt-4 pt-3 border-t border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs text-zinc-400">
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-zinc-500 shrink-0" />
             <span>{t(`${currentPlaylist.type}_info`)}</span>
@@ -143,7 +143,7 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
           {canModifyTracks() && (
             <button
               onClick={onOpenSearch}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white font-bold text-xs shadow-md transition-all shrink-0 ml-4"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white font-bold text-xs shadow-md transition-all shrink-0 sm:ml-4"
             >
               <Plus className="w-4 h-4" />
               <span>{t('add_songs')}</span>
@@ -235,7 +235,7 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                       if (hasControl) selectTrack(idx, true);
                     }
                   }}
-                  className={`p-3 rounded-2xl flex items-center justify-between gap-3 group transition-all cursor-pointer ${
+                  className={`p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2.5 sm:gap-3 group transition-all cursor-pointer ${
                     isDragging
                       ? 'opacity-30 border-2 border-dashed border-violet-500 bg-violet-500/10'
                       : isOver
@@ -246,17 +246,17 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                   }`}
                 >
                   {/* Left: Grip Handle & Index & Thumbnail & Title */}
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
                     {canReorder && (
                       <div
                         className="cursor-grab active:cursor-grabbing text-zinc-500 hover:text-violet-400 p-1 -ml-1 rounded transition-colors shrink-0"
                         title={t('drag_to_reorder')}
                       >
-                        <GripVertical className="w-4 h-4" />
+                        <GripVertical className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     )}
 
-                    <div className="w-5 text-center text-xs font-mono font-bold text-zinc-500 shrink-0">
+                    <div className="w-4 sm:w-5 text-center text-xs font-mono font-bold text-zinc-500 shrink-0">
                       {isCurrent && isPlaying ? (
                         <div className="flex items-center justify-center gap-0.5">
                           <span className="w-0.5 bg-cyan-400 rounded-full wave-bar-1" />
@@ -268,7 +268,7 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                       )}
                     </div>
 
-                    <div className="relative w-12 h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
+                    <div className="relative w-10 h-10 sm:w-12 sm:h-10 rounded-xl overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
                       <img
                         src={track.thumbnail || '/icon-192.png'}
                         alt={track.title}
@@ -283,9 +283,9 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                       </div>
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <h4 className={`text-sm font-bold truncate transition-colors ${isCurrent ? 'text-violet-300' : 'text-white group-hover:text-violet-300'
+                        <h4 className={`text-xs sm:text-sm font-bold truncate transition-colors ${isCurrent ? 'text-violet-300' : 'text-white group-hover:text-violet-300'
                           }`}>
                           {track.title}
                         </h4>
@@ -295,18 +295,18 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
-                        <span className="truncate">{track.artist || 'Unknown'}</span>
-                        <span>•</span>
-                        <span className="text-zinc-500">{t('added_by')} {track.added_by_name}</span>
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-zinc-400 mt-0.5">
+                        <span className="truncate max-w-[120px] sm:max-w-none">{track.artist || 'Unknown'}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span className="hidden sm:inline text-zinc-500">{t('added_by')} {track.added_by_name}</span>
                       </div>
                     </div>
 
                   </div>
 
                   {/* Right: Duration & Remove action */}
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs font-mono text-zinc-400">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <span className="text-[11px] sm:text-xs font-mono text-zinc-400">
                       {formatTime(track.duration)}
                     </span>
 
@@ -314,10 +314,10 @@ export default function RoomView({ onOpenSearch, onOpenMembers }) {
                       <button
                         onClick={(e) => handleRemoveTrack(e, track.id)}
                         disabled={deletingId === track.id}
-                        className="p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        className="p-1.5 sm:p-2 rounded-xl text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-all sm:opacity-0 sm:group-hover:opacity-100"
                         title="Remove track"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </button>
                     )}
                   </div>

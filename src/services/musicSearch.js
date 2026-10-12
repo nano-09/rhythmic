@@ -130,33 +130,40 @@ export async function resolveYouTubeId(track) {
     return cache[cacheKey];
   }
 
-  const searchQuery = `${track.title} ${track.artist} audio`;
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=1&q=${encodeURIComponent(searchQuery)}&key=${YOUTUBE_API_KEY}`;
+  // 1. First attempt: search with artist and title, ensuring embeddable videos
+  const cleanTitle = (track.title || '').replace(/\(.*\)|\[.*\]/g, '').trim();
+  const query = `${cleanTitle} ${track.artist || ''} official audio`.trim();
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(query)}&key=${YOUTUBE_API_KEY}`;
 
   try {
     const res = await fetch(url);
-    const data = await res.json();
-    const item = data.items?.[0];
-    if (item && item.id?.videoId) {
-      const vId = item.id.videoId;
-      cache[cacheKey] = vId;
-      saveResolvedCache(cache);
-      return vId;
+    if (res.ok) {
+      const data = await res.json();
+      const item = data.items?.[0];
+      if (item && item.id?.videoId) {
+        const vId = item.id.videoId;
+        cache[cacheKey] = vId;
+        saveResolvedCache(cache);
+        return vId;
+      }
     }
   } catch (e) {
-    console.warn('Category search failed, falling back:', e);
+    console.warn('First YouTube resolution attempt failed, falling back:', e);
   }
 
+  // 2. Second fallback attempt: broader title + artist search
   try {
-    const fallbackUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(`${track.title} ${track.artist}`)}&key=${YOUTUBE_API_KEY}`;
+    const fallbackUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(`${cleanTitle} ${track.artist || ''}`.trim())}&key=${YOUTUBE_API_KEY}`;
     const res = await fetch(fallbackUrl);
-    const data = await res.json();
-    const item = data.items?.[0];
-    if (item && item.id?.videoId) {
-      const vId = item.id.videoId;
-      cache[cacheKey] = vId;
-      saveResolvedCache(cache);
-      return vId;
+    if (res.ok) {
+      const data = await res.json();
+      const item = data.items?.[0];
+      if (item && item.id?.videoId) {
+        const vId = item.id.videoId;
+        cache[cacheKey] = vId;
+        saveResolvedCache(cache);
+        return vId;
+      }
     }
   } catch (e) {
     console.error('All YouTube resolution attempts failed:', e);

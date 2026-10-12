@@ -137,6 +137,7 @@ export const playlistService = {
   },
 
   async createPlaylist({ name, type, isPublic, password, currentUser }) {
+    const user = currentUser || getStoredGuestUser() || createGuestUser();
     let roomCode = null;
     if (isPublic) {
       roomCode = this.generate4DigitCode();
@@ -148,8 +149,8 @@ export const playlistService = {
       is_public: isPublic,
       room_code: roomCode,
       password: password?.trim() || null,
-      host_user_id: currentUser.id,
-      host_name: currentUser.username,
+      host_user_id: user.id,
+      host_name: user.username,
       playback_state: {
         current_track_id: null,
         current_track_index: 0,
@@ -173,8 +174,8 @@ export const playlistService = {
     // Add creator as host member
     await supabase.from('playlist_members').insert({
       playlist_id: data.id,
-      user_id: currentUser.id,
-      username: currentUser.username,
+      user_id: user.id,
+      username: user.username,
       role: 'host',
       is_online: true,
     });
@@ -263,6 +264,7 @@ export const playlistService = {
   },
 
   async addTrack({ playlistId, track, currentUser, position }) {
+    const user = currentUser || getStoredGuestUser() || createGuestUser();
     const newTrack = {
       playlist_id: playlistId,
       title: track.title,
@@ -271,8 +273,8 @@ export const playlistService = {
       duration: track.duration || 0,
       thumbnail: track.thumbnail || '',
       position: position ?? 0,
-      added_by_id: currentUser.id,
-      added_by_name: currentUser.username,
+      added_by_id: user.id,
+      added_by_name: user.username,
     };
 
     const { data, error } = await supabase

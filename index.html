@@ -11,10 +11,23 @@
     <title>Sync Beats - Real-Time Music Sync</title>
     <link rel="icon" type="image/png" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.json" />
+    <script>
+      window.__ytApiReady = false;
+      window.onYouTubeIframeAPIReady = function() {
+        window.__ytApiReady = true;
+        if (typeof window.__onYouTubeReadyCallback === 'function') {
+          window.__onYouTubeReadyCallback();
+        }
+      };
+    </script>
     <script src="https://www.youtube.com/iframe_api"></script>
   </head>
   <body class="bg-[#0a0b10] text-zinc-100 antialiased overflow-x-hidden min-h-screen">
     <div id="root"></div>
+    <!-- Hidden YouTube playback container: MUST remain outside #root so React doesn't destroy or reconcile it -->
+    <div style="position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
+      <div id="youtube-hidden-player"></div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

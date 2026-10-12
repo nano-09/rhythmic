@@ -63,6 +63,29 @@ async function fetchWithCapacitorFallback(url) {
   return { ok: res.ok, data };
 }
 
+export async function callYouTubeApi(endpoint, params = {}) {
+  const queryStr = Object.entries(params)
+    .filter(([_, v]) => v !== undefined && v !== null)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&');
+
+  // 1. Try local Vite dev proxy first (automatically attaches Referer: http://localhost:5173/)
+  try {
+    const proxyUrl = `/api/youtube/${endpoint}?${queryStr}&key=${YOUTUBE_API_KEY}`;
+    const res = await fetch(proxyUrl);
+    if (res.ok) {
+      const data = await res.json();
+      if (!data.error) {
+        return { ok: true, data };
+      }
+    }
+  } catch (e) {}
+
+  // 2. Direct request with Capacitor fallback
+  const directUrl = `https://www.googleapis.com/youtube/v3/${endpoint}?${queryStr}&key=${YOUTUBE_API_KEY}`;
+  return await fetchWithCapacitorFallback(directUrl);
+}
+
 export async function searchYouTube(query) {
   if (!query || !query.trim()) return [];
 

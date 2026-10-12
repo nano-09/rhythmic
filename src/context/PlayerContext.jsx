@@ -27,6 +27,7 @@ export function PlayerProvider({ children }) {
   // References
   const ytPlayerRef = useRef(null);
   const isYtReadyRef = useRef(false);
+  const pendingPlayRef = useRef(null);
   const progressTimerRef = useRef(null);
   const channelRef = useRef(null);
   const isSyncingFromRemoteRef = useRef(false);
@@ -107,21 +108,29 @@ export function PlayerProvider({ children }) {
     };
   }, []);
 
-  // Load YouTube IFrame API script
+  // Initialize YouTube IFrame Player
   useEffect(() => {
-    if (!window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
+    window.__onYouTubeReadyCallback = () => {
       initPlayer();
     };
 
     if (window.YT && window.YT.Player) {
       initPlayer();
+    } else {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.YT && window.YT.Player) {
+          initPlayer();
+          clearInterval(interval);
+        } else if (attempts > 20) {
+          clearInterval(interval);
+        }
+      }, 300);
+      return () => {
+        clearInterval(interval);
+        if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+      };
     }
 
     return () => {
@@ -150,11 +159,22 @@ export function PlayerProvider({ children }) {
         events: {
           onReady: () => {
             isYtReadyRef.current = true;
+            if (pendingPlayRef.current) {
+              const { index, autoPlay } = pendingPlayRef.current;
+              pendingPlayRef.current = null;
+              selectTrack(index, autoPlay);
+            }
           },
           onStateChange: handleYtStateChange,
           onError: (e) => {
-            console.warn('[YouTube Player Error]', e.data);
-            handleTrackEnded();
+            console.warn('[YouTube Player Error code]', e.data);
+            setIsPlaying(false);
+            shouldBePlayingRef.current = false;
+            // Error codes: 2=invalid param, 5=html5 error, 100=not found, 101/150=embed blocked
+            // Auto-skip to next track on unrecoverable errors
+            if ([100, 101, 150].includes(e.data)) {
+              setTimeout(() => handleTrackEnded(), 1500);
+            }
           },
         },
       });
@@ -280,30 +300,46 @@ export function PlayerProvider({ children }) {
 
   const resolveAndPlay = async (track, index, autoPlay) => {
     const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || 'AIzaSyBskLIkwY1zBmHwl0EuFTF2RHzb5giShko';
-    const pendingQuery = decodeURIComponent(track.youtube_id.replace('__pending__', ''));
+    const pendingQuery = decodeURIComponent((track.youtube_id || '').replace('__pending__', ''));
     try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=1&q=${encodeURIComponent(pendingQuery)}&key=${YOUTUBE_API_KEY}`;
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=3&q=${encodeURIComponent(pendingQuery)}&key=${YOUTUBE_API_KEY}`;
       const res = await fetch(url);
-      const data = await res.json();
-      const videoId = data.items?.[0]?.id?.videoId;
-      if (videoId && ytPlayerRef.current && isYtReadyRef.current) {
-        if (autoPlay) {
-          ytPlayerRef.current.loadVideoById(videoId, 0);
-          setIsPlaying(true);
-        } else {
-          ytPlayerRef.current.cueVideoById(videoId, 0);
-          setIsPlaying(false);
+      if (res.ok) {
+        const data = await res.json();
+        const videoId = data.items?.[0]?.id?.videoId;
+        if (videoId) {
+          // Update track in memory state immediately
+          setTracks(prev => prev.map((t, i) => i === index ? { ...t, youtube_id: videoId } : t));
+
+          if (ytPlayerRef.current && isYtReadyRef.current) {
+            try {
+              if (autoPlay) {
+                ytPlayerRef.current.loadVideoById(videoId, 0);
+                setIsPlaying(true);
+              } else {
+                ytPlayerRef.current.cueVideoById(videoId, 0);
+                setIsPlaying(false);
+              }
+            } catch (err) {
+              console.error('Error starting resolved video:', err);
+            }
+          } else {
+            pendingPlayRef.current = { index, autoPlay };
+          }
+
+          // Patch in Supabase
+          try {
+            const { supabase: sb } = await import('../services/supabase');
+            await sb.from('playlist_tracks').update({ youtube_id: videoId }).eq('id', track.id);
+          } catch (dbErr) {
+            console.warn('Could not patch resolved youtube_id in Supabase:', dbErr);
+          }
+          return;
         }
-        // Patch the track in Supabase so next time it loads immediately
-        const { supabase: sb } = await import('../services/supabase');
-        await sb.from('playlist_tracks').update({ youtube_id: videoId }).eq('id', track.id);
-      } else {
-        console.warn('Could not resolve YouTube ID for:', track.title);
-        handleTrackEnded();
       }
+      console.warn('Could not resolve YouTube ID for:', track.title);
     } catch (e) {
       console.warn('Failed to resolve pending YouTube ID:', e);
-      handleTrackEnded();
     }
   };
 
@@ -335,7 +371,7 @@ export function PlayerProvider({ children }) {
       // Handle pending YouTube ID (iTunes song whose YT ID wasn't resolved at add time)
       if (track.youtube_id?.startsWith('__pending__')) {
         resolveAndPlay(track, index, autoPlay);
-      } else {
+      } else if (track.youtube_id) {
         try {
           if (autoPlay) {
             ytPlayerRef.current.loadVideoById(track.youtube_id, 0);
@@ -347,6 +383,11 @@ export function PlayerProvider({ children }) {
         } catch (e) {
           console.error('Error loading video:', e);
         }
+      }
+    } else {
+      pendingPlayRef.current = { index, autoPlay };
+      if (!ytPlayerRef.current && window.YT && window.YT.Player) {
+        initPlayer();
       }
     }
 
@@ -635,13 +676,15 @@ export function PlayerProvider({ children }) {
     }
   };
 
-  const joinRoom = async (playlist) => {
+  const joinRoom = async (playlist, overrideUser) => {
     setCurrentPlaylist(playlist);
     await refreshTracks(playlist.id);
     await refreshMembers(playlist.id);
 
-    if (user) {
-      await playlistService.joinMember(playlist.id, user);
+    // Use overrideUser first (for fresh guest login), then fall back to context user
+    const activeUser = overrideUser || user;
+    if (activeUser) {
+      await playlistService.joinMember(playlist.id, activeUser);
     }
 
     saveToJoinedHistory(playlist);

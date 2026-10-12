@@ -6,7 +6,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function CreatePlaylistModal({ isOpen, onClose }) {
-  const { user } = useAuth();
+  const { user, loginAsGuest } = useAuth();
   const { joinRoom } = usePlayer();
   const { t } = useLanguage();
 
@@ -37,15 +37,20 @@ export default function CreatePlaylistModal({ isOpen, onClose }) {
     setErrorMsg('');
 
     try {
+      let activeUser = user;
+      if (!activeUser) {
+        activeUser = loginAsGuest('Host');
+      }
+
       const newPlaylist = await playlistService.createPlaylist({
         name: name.trim(),
         type,
         isPublic: type === 'party' ? true : isPublic,
         password: isPublic && password.trim() ? password.trim() : null,
-        currentUser: user,
+        currentUser: activeUser,
       });
 
-      await joinRoom(newPlaylist);
+      await joinRoom(newPlaylist, activeUser);
       onClose();
     } catch (err) {
       console.error('Failed to create playlist:', err);
